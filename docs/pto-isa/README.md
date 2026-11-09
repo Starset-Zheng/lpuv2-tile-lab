@@ -9,4 +9,4 @@
 
 目录按namespace+参考条目统计：139个core参考条目对应136个core公开API名；另有12个通信接口。TMATMUL_MX_HIF4、TQUANT_DN、TQUANT_HIF4为单独说明的重载语义变体；TGATHER/TSCATTER区分本地与pto::comm。
 
-目录中的实现路径表示固定版本的源码证据。当前仓库没有登记已执行的算子验证。完整中文总结在独立飞书参考文档中维护，其链接创建后补入本页。
+目录中的实现路径表示固定版本的源码证据。当前仓库没有登记已执行的算子验证。完整中文总结：[PTO Tile ISA 指令集参考](https://tju-opentpu.feishu.cn/docx/GFfBdiCNLokRTsxmUbPcVHYankk)（飞书访问权限按文档设置）。
