@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "pto": {
+    "url": "https://github.com/hw-native-sys/pto-isa.git",
+    "commit": "90a3796597a5fabc2ce5066e73f785c2e85822f7",
+    "path": "third_party/pto-isa"
+  },
+  "model_reference": {
+    "url": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py",
+    "commit": "f90e93c4f83974f634860e246cdfd2c68666d605",
+    "config_url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/config.json"
+  }
+}

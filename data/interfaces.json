@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "interfaces": [
+    {
+      "id": "IF-01",
+      "name": "Full Attention KV",
+      "owner": "B",
+      "objects": "按层/请求隔离的 K、V、有效长度与位置",
+      "semantics": "当前 K 经过 Norm/RoPE 后追加；消费者看到当前有效前缀",
+      "status": "planned"
+    },
+    {
+      "id": "IF-02",
+      "name": "GDN / Conv 状态",
+      "owner": "A",
+      "objects": "FP32 State [B,32,128,128]；8192 通道的最近 3 个历史值",
+      "semantics": "Token 与 chunk 边界顺序更新；非零初始状态和尾块保持一致",
+      "status": "planned"
+    },
+    {
+      "id": "IF-03",
+      "name": "MoE 路由与合并",
+      "owner": "B",
+      "objects": "专家 ID、Token ID、路由权重、Ne、分桶偏移与累加结果",
+      "semantics": "保持重排前后对应；每 Token 8 份 routed 贡献及 shared 贡献",
+      "status": "planned"
+    },
+    {
+      "id": "IF-04",
+      "name": "视觉 / 位置元数据",
+      "owner": "A",
+      "objects": "时空网格、有效片段、占位位置、text/temporal/height/width 位置与偏移",
+      "semantics": "按 get_rope_index 规则生成位置元数据，保证 Patch、视觉特征与文本位置匹配；执行归属在接口设计时确认",
+      "status": "planned"
+    },
+    {
+      "id": "IF-05",
+      "name": "生成与投机解码",
+      "owner": "B（A提供GDN/Conv状态提交与恢复）",
+      "objects": "选定 logits、候选长度、接受前缀与状态版本",
+      "semantics": "接受前缀后提交相应状态；拒绝后恢复主干 KV、GDN/Conv 及草稿状态",
+      "status": "planned"
+    }
+  ]
+}

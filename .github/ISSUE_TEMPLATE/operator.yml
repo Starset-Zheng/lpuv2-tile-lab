@@ -1,0 +1,28 @@
+name: 算子或kernel任务
+description: 认领OP/kernel，记录计算、接口和交付
+title: "[OP/K] "
+body:
+  - type: input
+    id: ids
+    attributes:
+      label: OP / kernel编号与主责
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 范围、参考版本与输入输出
+      description: 包含shape、dtype、mask、索引、状态及运行场景
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 公共接口与依赖
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 交付物与验收
+      description: Golden、Tile程序、边界用例、实际后端结果和ISA需求
+    validations:
+      required: true

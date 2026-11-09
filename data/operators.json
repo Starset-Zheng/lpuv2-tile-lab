@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "phase": "framework",
+  "operators": [
+    {
+      "id": "OP-01",
+      "name": "Token Embedding",
+      "architecture_path": "Token embedding",
+      "owner": "B",
+      "kernel_ids": [
+        "K-EMB-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-08",
+      "name": "Vision Patch Embedding",
+      "architecture_path": "Vision encoder / Patch Embedding",
+      "owner": "A",
+      "kernel_ids": [
+        "K-VIS-01",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-11",
+      "name": "视觉位置嵌入",
+      "architecture_path": "Vision encoder / 位置嵌入",
+      "owner": "A",
+      "kernel_ids": [
+        "K-VIS-02"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-03",
+      "name": "LayerNorm",
+      "architecture_path": "Vision encoder / LayerNorm",
+      "owner": "A",
+      "kernel_ids": [
+        "K-NRM-02",
+        "K-NRM-04"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-09",
+      "name": "Vision Attention",
+      "architecture_path": "Vision encoder / Vision Attention",
+      "owner": "A",
+      "kernel_ids": [
+        "K-VIS-03",
+        "K-VIS-04",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-04",
+      "name": "Residual Add",
+      "architecture_path": "Vision encoder / Residual Add",
+      "owner": "A",
+      "kernel_ids": [
+        "K-NRM-03",
+        "K-NRM-04"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-10",
+      "name": "Dense FFN（GELU MLP）",
+      "architecture_path": "Vision encoder / Dense FFN",
+      "owner": "A",
+      "kernel_ids": [
+        "K-VIS-05",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-12",
+      "name": "Spatial Merger / Projector",
+      "architecture_path": "Vision encoder / Spatial Merger",
+      "owner": "A",
+      "kernel_ids": [
+        "K-VIS-06",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-13",
+      "name": "Visual Feature Scatter",
+      "architecture_path": "Multimodal fusion",
+      "owner": "A",
+      "kernel_ids": [
+        "K-MM-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-02",
+      "name": "RMSNorm",
+      "architecture_path": "Decoder / RMSNorm",
+      "owner": "B",
+      "kernel_ids": [
+        "K-NRM-01",
+        "K-NRM-04",
+        "K-OUT-01",
+        "K-MTP-01",
+        "K-MTP-02"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-06",
+      "name": "Gated DeltaNet 线性注意力",
+      "architecture_path": "Decoder / GDN",
+      "owner": "A",
+      "kernel_ids": [
+        "K-GDN-01",
+        "K-GDN-02",
+        "K-GDN-03",
+        "K-GDN-04",
+        "K-GDN-05",
+        "K-GDN-06",
+        "K-GDN-07",
+        "K-GDN-08",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-05",
+      "name": "Full Attention",
+      "architecture_path": "Decoder / Full Attention",
+      "owner": "B",
+      "kernel_ids": [
+        "K-FA-01",
+        "K-FA-02",
+        "K-FA-03",
+        "K-FA-04",
+        "K-FA-05",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-07",
+      "name": "MoE FFN",
+      "architecture_path": "Decoder / MoE FFN",
+      "owner": "B",
+      "kernel_ids": [
+        "K-MOE-01",
+        "K-MOE-02",
+        "K-MOE-03",
+        "K-MOE-04",
+        "K-MOE-05",
+        "K-MOE-06",
+        "K-MOE-07",
+        "K-MOE-08",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-14",
+      "name": "LM Head",
+      "architecture_path": "Final Norm → LM Head",
+      "owner": "B",
+      "kernel_ids": [
+        "K-OUT-01",
+        "K-MTP-02",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-15",
+      "name": "Feature Concat",
+      "architecture_path": "MTP / Feature Concat",
+      "owner": "B",
+      "kernel_ids": [
+        "K-MTP-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    },
+    {
+      "id": "OP-16",
+      "name": "MTP 输入投影",
+      "architecture_path": "MTP / 输入投影",
+      "owner": "B",
+      "kernel_ids": [
+        "K-MTP-01",
+        "K-QNT-01"
+      ],
+      "golden_status": "planned",
+      "pto_implementation_status": "planned",
+      "pto_validation_status": "planned",
+      "model_validation_status": "planned"
+    }
+  ]
+}
