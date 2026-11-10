@@ -2,19 +2,21 @@
 
 A主责GDN与视觉分支，B主责Full Attention、MoE、输入输出及MTP。按计算、状态和验证复杂度粗估分配：A为9条OP/17个kernel，B为7条OP/20个kernel。
 
+A已由jcx认领，工作分支为 `operator_dev_jcx`。下表记录reference进度；PTO实现和模型验证独立登记。接口和验证范围见 [A组reference说明](reference-a.md)。
+
 | 主责 | OP | 算子 | 当前状态 |
 | --- | --- | --- | --- |
 | B | OP-01 | Token Embedding | planned |
-| A | OP-08 | Vision Patch Embedding | planned |
-| A | OP-11 | 视觉位置嵌入 | planned |
-| A | OP-03 | LayerNorm | planned |
-| A | OP-09 | Vision Attention | planned |
-| A | OP-04 | Residual Add | planned |
-| A | OP-10 | Dense FFN（GELU MLP） | planned |
-| A | OP-12 | Spatial Merger / Projector | planned |
-| A | OP-13 | Visual Feature Scatter | planned |
+| A | OP-08 | Vision Patch Embedding | golden_ready |
+| A | OP-11 | 视觉位置嵌入 | golden_ready |
+| A | OP-03 | LayerNorm | golden_ready |
+| A | OP-09 | Vision Attention | golden_ready |
+| A | OP-04 | Residual Add | golden_ready |
+| A | OP-10 | Dense FFN（GELU MLP） | golden_ready |
+| A | OP-12 | Spatial Merger / Projector | golden_ready |
+| A | OP-13 | Visual Feature Scatter | golden_ready |
 | B | OP-02 | RMSNorm | planned |
-| A | OP-06 | Gated DeltaNet 线性注意力 | planned |
+| A | OP-06 | Gated DeltaNet 线性注意力 | in_progress：核心/状态图已验证，待目标FP8投影参考 |
 | B | OP-05 | Full Attention | planned |
 | B | OP-07 | MoE FFN | planned |
 | B | OP-14 | LM Head | planned |

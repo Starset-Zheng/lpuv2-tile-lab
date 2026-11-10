@@ -24,10 +24,18 @@
         "K-VIS-01",
         "K-QNT-01"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.vision.vision_patch_embedding"
+      ],
+      "reference_tests": [
+        "tests/operators/test_vision_ref.py"
+      ],
+      "golden_scope": "BF16 reference with synthetic parameters; operator-level PyTorch checks"
     },
     {
       "id": "OP-11",
@@ -37,10 +45,20 @@
       "kernel_ids": [
         "K-VIS-02"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.vision.vision_position_interpolation",
+        "pymodel.ref.vision.vision_position_embedding"
+      ],
+      "reference_tests": [
+        "tests/operators/test_vision_ref.py",
+        "tests/operators/test_vision_position_ref.py"
+      ],
+      "golden_scope": "BF16 position embedding plus int64/FP32 interpolation metadata generation; operator-level PyTorch checks"
     },
     {
       "id": "OP-03",
@@ -51,10 +69,18 @@
         "K-NRM-02",
         "K-NRM-04"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.common.layer_norm"
+      ],
+      "reference_tests": [
+        "tests/operators/test_common_ref.py"
+      ],
+      "golden_scope": "BF16 reference with synthetic parameters; operator-level PyTorch checks"
     },
     {
       "id": "OP-09",
@@ -66,10 +92,18 @@
         "K-VIS-04",
         "K-QNT-01"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.vision.vision_attention"
+      ],
+      "reference_tests": [
+        "tests/operators/test_vision_ref.py"
+      ],
+      "golden_scope": "BF16 reference with synthetic parameters; operator-level PyTorch checks"
     },
     {
       "id": "OP-04",
@@ -80,10 +114,18 @@
         "K-NRM-03",
         "K-NRM-04"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.common.residual_add"
+      ],
+      "reference_tests": [
+        "tests/operators/test_common_ref.py"
+      ],
+      "golden_scope": "BF16 reference with synthetic parameters; operator-level PyTorch checks"
     },
     {
       "id": "OP-10",
@@ -94,10 +136,18 @@
         "K-VIS-05",
         "K-QNT-01"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.vision.dense_ffn"
+      ],
+      "reference_tests": [
+        "tests/operators/test_vision_ref.py"
+      ],
+      "golden_scope": "BF16 reference with synthetic parameters; operator-level PyTorch checks"
     },
     {
       "id": "OP-12",
@@ -108,10 +158,18 @@
         "K-VIS-06",
         "K-QNT-01"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.vision.spatial_merger"
+      ],
+      "reference_tests": [
+        "tests/operators/test_vision_ref.py"
+      ],
+      "golden_scope": "BF16 reference with synthetic parameters; operator-level PyTorch checks"
     },
     {
       "id": "OP-13",
@@ -121,10 +179,18 @@
       "kernel_ids": [
         "K-MM-01"
       ],
-      "golden_status": "planned",
+      "golden_status": "golden_ready",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.multimodal.visual_feature_scatter"
+      ],
+      "reference_tests": [
+        "tests/operators/test_multimodal_ref.py"
+      ],
+      "golden_scope": "BF16 reference with synthetic parameters; operator-level PyTorch checks"
     },
     {
       "id": "OP-02",
@@ -159,10 +225,25 @@
         "K-GDN-08",
         "K-QNT-01"
       ],
-      "golden_status": "planned",
+      "golden_status": "in_progress",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
-      "model_validation_status": "planned"
+      "model_validation_status": "planned",
+      "owner_alias": "jcx",
+      "reference_entry_points": [
+        "pymodel.ref.gdn.gdn_reference",
+        "pymodel.ref.gdn.gdn_conv",
+        "pymodel.ref.gdn.gdn_recurrent",
+        "pymodel.ref.gdn.gdn_chunk",
+        "pymodel.ref.gdn.gdn_gated_norm"
+      ],
+      "reference_tests": [
+        "tests/operators/test_gdn_ref.py"
+      ],
+      "golden_scope": "FP32 recurrent/chunk core, Conv history and gated Norm verified; full graph checked with BF16 projection fixtures",
+      "pending_reference_work": [
+        "Connect the independent target FP8 projection reference for qkv/z/out and verify the target profile"
+      ]
     },
     {
       "id": "OP-05",

@@ -1,6 +1,6 @@
 # CI接入位置
 
-当前仅有框架，尚无可执行CI。首个实现PR接入：
+当前可本地运行 `python -m pytest tests/framework -q`，尚无可执行CI。首个算子实现PR接入：
 
 1. registry与代码风格检查。
 2. 固定PTO子模块的实际CPU编译和运行。

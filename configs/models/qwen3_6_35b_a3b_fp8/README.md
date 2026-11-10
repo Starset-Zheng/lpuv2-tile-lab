@@ -10,4 +10,4 @@
 | [numerics.json](numerics.json) | dtype、Norm、Attention、GDN、MoE、Vision与量化数值规则 |
 | [checkpoint_metadata.json](checkpoint_metadata.json) | 全42分片header的dtype/shape核对结果与代表张量 |
 
-详细规则及后续执行记录见 [模型与数值基线](../../../docs/model-numerical-baseline.md)。权重文件保存在仓库外。当前已核对配置、来源源码和checkpoint header；golden、FP8执行环境及模型结果尚未实现/验证。
+详细规则及后续执行记录见 [模型与数值基线](../../../docs/model-numerical-baseline.md)。权重文件保存在仓库外。配置、来源源码和checkpoint header已核对；[A组算子reference](../../../docs/reference-a.md)已部分就绪，完整模型、目标FP8执行环境与模型结果随对应任务验证。

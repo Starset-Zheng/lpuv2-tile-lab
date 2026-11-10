@@ -19,4 +19,10 @@ Model weights are not included. Header-derived metadata records storage dtype an
 Numerical descriptions reference
 [Hugging Face Transformers](https://github.com/huggingface/transformers/tree/f90e93c4f83974f634860e246cdfd2c68666d605),
 commit `f90e93c4f83974f634860e246cdfd2c68666d605`.
-Source URLs and SHA-256 values are recorded in `baseline.json`; source implementation files are not vendored here.
+Source URLs and SHA-256 values are recorded in `baseline.json`.
+
+Unmodified snapshots of `modeling_qwen3_5_moe.py` and `vision_utils.py` are included as non-package
+test fixtures in `tests/reference_sources/`. Operator tests verify their SHA-256 values
+and extract selected Torch fallback definitions for independent comparisons.
+The original copyright notice is preserved; the Apache 2.0 license is included
+as [LICENSE.transformers](tests/reference_sources/LICENSE.transformers).

@@ -107,4 +107,4 @@ y_bf16 = BF16(u_bf16 * SiLU(FP32(z_bf16)))
 | Vision MLP / Merger | BF16 Linear → GELU → BF16 Linear；保留激活输出 dtype，block 使用 GELU(tanh)，Merger 使用 GELU exact |
 | BF16 投影、Residual、Embedding / Scatter | 按源码保持 BF16 输出边界；底层 GEMM / 归约内部累加精度随实际后端记录 |
 
-Attention 的数学 reference 使用固定 eager 路径，GDN 使用固定 Torch recurrent / chunk fallback。具体 FP8 kernel 版本、运行环境、比较输出与误差记录遵循 [验证约定](validation.md)；CPU 反量化到 BF16 的排错路径单独登记。当前已完成来源和元数据核对，尚未实现 golden 或校准数值容差。
+Attention 的数学 reference 使用固定 eager 路径，GDN 使用固定 Torch recurrent / chunk fallback。具体 FP8 kernel 版本、运行环境、比较输出与误差记录遵循 [验证约定](validation.md)；CPU 反量化到 BF16 的排错路径单独登记。当前已完成来源、元数据核对及[A组首批算子reference](reference-a.md)，完整模型与目标FP8后端容差随对应实现验证。

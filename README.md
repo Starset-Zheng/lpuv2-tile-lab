@@ -2,7 +2,7 @@
 
 面向 Qwen3.6-35B-A3B 的算子协作工程：建立 PyTorch golden，使用 PTO 编写 Tile kernel，逐算子与模型验证，并据此完善 LPUv2 Tile ISA 与 programming model。
 
-**当前阶段：公共验证框架已建立，算子待实现。** 已登记16条模型OP、37个kernel候选、A/B分工及固定版本PTO指令索引。可运行用例定义、逐输出比较和复现产物的框架检查；所有模型算子实现和数值验证状态仍为 `planned`。
+**当前阶段：公共验证框架与A组首批PyTorch reference已接入。** 已登记16条模型OP、37个kernel候选、A/B分工及固定版本PTO指令索引。A组8条BF16算子reference已通过检查；GDN核心与状态图已验证，目标FP8投影参考待接入。PTO实现和模型验证分别推进。
 
 ## 从这里开始
 
@@ -11,6 +11,7 @@
 3. 按 [开发流程](CONTRIBUTING.md) 先确认计算与接口，再提交golden和Tile实现。
 4. 查阅 [PTO参考入口](docs/pto-isa/README.md) 和 [机器可读指令目录](data/pto_isa_catalog.json)。
 5. 按 [验证框架使用方法](docs/validation.md) 接入reference、实际后端和命名输出。
+6. A组的接口、覆盖范围和依赖见 [reference说明](docs/reference-a.md)。
 
 ```bash
 git clone --recurse-submodules https://github.com/cxjiang-bk/lpuv2-tile-lab.git
@@ -19,20 +20,20 @@ cd lpuv2-tile-lab
 git submodule update --init --recursive
 ```
 
-本地验证框架检查：
+本地框架与reference检查：
 
 ```bash
 python -m pip install -e '.[dev]'
-python -m pytest tests/framework -q
+python -m pytest tests/framework tests/operators -q
 ```
 
-框架检查使用小型fixture，覆盖BF16/FP32、索引、状态隔离和错误报告。OP-04的[示例case](cases/examples/op04-residual-bf16.json)供首个算子接入使用；当前尚无对应reference或PTO实现。
+框架检查覆盖BF16/FP32、索引、状态隔离和错误报告。算子检查对照固定来源验证A组reference，包含实际Vision维度和GDN State维度。OP-04的[示例case](cases/examples/op04-residual-bf16.json)与[GDN核心case](cases/operators/gdn-recurrent-bf16.json)已接入reference检查；实际PTO后端随kernel实现接入。
 
 PTO固定在 `90a3796597a5fabc2ce5066e73f785c2e85822f7`，来源为公开 [hw-native-sys/pto-isa](https://github.com/hw-native-sys/pto-isa)。当前PTO目录覆盖139个core参考条目（136个core公开API名）及12个通信接口。语义变体、兼容名和命名空间重名在目录中分别记录。
 
 ## 模型与数值基线
 
-模型固定为 **Qwen/Qwen3.6-35B-A3B-FP8**。共同基线放在 [configs/models/qwen3_6_35b_a3b_fp8/](configs/models/qwen3_6_35b_a3b_fp8/)，包含官方配置快照、模型/源码revision、checkpoint dtype元数据和数值规则。两人实现reference前阅读 [模型与数值基线](docs/model-numerical-baseline.md)。当前尚未实现golden或完成模型数值验证。
+模型固定为 **Qwen/Qwen3.6-35B-A3B-FP8**。共同基线放在 [configs/models/qwen3_6_35b_a3b_fp8/](configs/models/qwen3_6_35b_a3b_fp8/)，包含官方配置快照、模型/源码revision、checkpoint dtype元数据和数值规则。两人实现reference前阅读 [模型与数值基线](docs/model-numerical-baseline.md)。逐算子reference进度见登记表；完整模型和目标FP8端到端结果在相应任务中验证。
 
 ## 目录
 

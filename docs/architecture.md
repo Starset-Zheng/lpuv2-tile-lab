@@ -16,4 +16,4 @@
 
 PTO数学主体在原生kernel中执行，Python侧负责参数、调度和比较。PTO完整ISA说明独立维护，仓库保存固定版本索引与实际程序。LPUv2的Tile register、Slice、更新语义、依赖和生命周期由程序需求推动定义；当前没有预设硬件编码。
 
-首次实现可从OP-04 Residual Add与OP-02 RMSNorm切入，分别由A/B完成；这只是后续入口建议，登记状态当前均为planned。
+A组reference已接入 `pymodel/ref/` 和 `tests/operators/`，接口与验证范围见 [A组说明](reference-a.md)。PTO阶段可从OP-04 Residual Add与OP-02 RMSNorm切入，分别由A/B完成。

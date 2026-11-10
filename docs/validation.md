@@ -20,7 +20,7 @@ python -m pip install -e '.[dev]'
 python -m pytest tests/framework -q
 ```
 
-当前测试覆盖比较器、用例配置、输入/状态隔离和复现产物。测试中的小型回调统一标记为 `framework_fixture`，模型OP与PTO kernel状态保持 `planned`。首个算子接入时增加真实reference、后端编译和对应测试。
+当前框架测试覆盖比较器、用例配置、输入/状态隔离和复现产物；其中的小型回调统一标记为 `framework_fixture`。A组reference检查位于 `tests/operators/`，使用 `pytorch_reference_check` 等明确的PyTorch路径，覆盖范围见 [A组reference说明](reference-a.md)。PTO后端编译及结果比较随kernel实现接入。
 
 ## 公共入口与原pymodel的对应关系
 
@@ -46,12 +46,13 @@ Reference和被测实现分别接收一份深拷贝的输入及参数，可以�
 
 ## 首个算子的接入方式
 
-下面展示pytest用例的组织方式。`residual_ref`与`residual_pto_cpu`由OP-04实现任务提供，目前仓库尚未提供这两个函数。
+下面展示pytest用例的组织方式。`residual_add` reference已提供；`residual_pto_cpu`由后续PTO kernel任务接入。
 
 ```python
 import torch
 
 from pymodel.common.case import load_case
+from pymodel.ref.common import residual_add
 from pymodel.task_gen.validate import run_case
 
 
@@ -65,7 +66,7 @@ def test_residual_bf16(tmp_path):
     }
     result = run_case(
         case, inputs=inputs,
-        reference=lambda t, p: {"out": residual_ref(t["x"], t["residual"])},
+        reference=lambda t, p: {"out": residual_add(t["x"], t["residual"])},
         implementation=lambda t, p: {"out": residual_pto_cpu(t["x"], t["residual"])},
         backend="pto_cpu", artifact_root=tmp_path,
         backend_details={"target_family": "<actual target>", "binary_sha256": "<actual build hash>"},
