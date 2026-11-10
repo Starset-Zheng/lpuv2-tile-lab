@@ -1,94 +1,110 @@
 # Qwen3.6-35B-A3B-FP8 模型与数值基线
 
-确认日期：2026-11-10；基线ID：`qwen3_6_35b_a3b_fp8-v1`。本基线供两人共同实现reference、PTO kernel及逐级验证。当前固定模型配置、checkpoint版本和来源代码，并保存可核对的数值规则。
+基线ID：`qwen3_6_35b_a3b_fp8-v1`；确认日期：2026-11-10。本文说明两件事：权重、激活与状态采用哪种精度保存，以及算子计算中在哪些位置转换精度。
 
-## 文件位置与事实来源
+模型固定为 [Qwen/Qwen3.6-35B-A3B-FP8](https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/tree/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2)，revision 为 `c653bba46dfa06e9658dcc0b0dc87fe4685f14a2`。计算规则依据 [Transformers 固定源码](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py)及其 [FP8 集成](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py)。模型尺寸、版本和来源 hash 见 [baseline.json](../configs/models/qwen3_6_35b_a3b_fp8/baseline.json)，完整数学与精度规则见 [numerics.json](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)。
 
-模型专属配置集中在 [configs/models/qwen3_6_35b_a3b_fp8/](../configs/models/qwen3_6_35b_a3b_fp8/)。[baseline.json](../configs/models/qwen3_6_35b_a3b_fp8/baseline.json)记录版本与结构，[numerics.json](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)记录计算规则。`data/`继续管理OP/K/接口登记及依赖入口；`cases/`后续描述某次具体输入与场景；`artifacts/`保存运行结果。
+## 1. 权重、激活与状态的精度
 
-| 对象 | 固定版本 / 来源 |
+### 1.1 模型权重与量化参数
+
+下表的存储精度来自固定 checkpoint，即模型发布的权重文件。已核对全部 42 个 safetensors 分片的 header；张量数量、形状和代表张量记录在 [checkpoint_metadata.json](../configs/models/qwen3_6_35b_a3b_fp8/checkpoint_metadata.json)。本次核对未加载权重 payload。
+
+| 对象 | checkpoint 存储精度 | 加载和使用规则 |
+| --- | --- | --- |
+| Full Attention 的 Q/gate、K、V、输出投影 | FP8 E4M3 | 通过 FP8 Linear 执行；每个权重配套 block scale |
+| GDN 的 qkv、z、输出投影 | FP8 E4M3 | 同上 |
+| MoE routed / shared 专家的 Gate、Up、Down 投影 | FP8 E4M3 | 同上；Router 与 shared 标量门控单列如下 |
+| Token Embedding、LM Head、整个 Vision Encoder（含 Merger） | BF16 | 在基础 BF16 profile 中使用 BF16 权重 |
+| Decoder / QK / Final Norm、GDN gated Norm 的权重 | BF16 | Norm 内部的 FP32 计算及回转位置见第 2 部分 |
+| MoE Router、shared 标量门控投影 | BF16 | 保留 BF16 输入及输出边界；Router 概率计算转 FP32 |
+| GDN 的 a/b 投影、Conv 权重、A_log、dt_bias | BF16 | g 的计算显式转 FP32；参数存储精度与计算精度分别处理 |
+| FP8 权重的 `weight_scale_inv` | BF16 | 保留 checkpoint scale 值；固定 FP8Linear 在默认 `scale_fmt=float` 下声明 FP32 scale 参数，加载后记录实际 dtype |
+
+FP8 权重按 `[N,K]` 的 `128×128` block 配 scale，scale 形状为 `[ceil(N/128),ceil(K/128)]`。恢复关系为：
+
+```text
+W_real[n,k] = float(W_fp8[n,k]) * float(weight_scale_inv[n//128,k//128])
+```
+
+这里的 `weight_scale_inv` 实际作为乘数使用，保留发布值。完整不量化清单及 loader 的模块名匹配规则以 [config.json](../configs/models/qwen3_6_35b_a3b_fp8/config.json)和固定源码为准。
+
+MTP 权重中，输入 fc、两路前置 Norm 和输出 Norm 为 BF16，Attention / 专家投影含 FP8。固定 Transformers 主模型会忽略 `mtp.*` 权重，没有 MTP forward；MTP 的激活、Norm 解释及 draft 状态规则需另锁定支持 MTP 的执行 reference，当前只固定其权重元数据。
+
+### 1.2 中间激活与跨 Token 状态
+
+基础 profile 使用 BF16 激活。**权重是 FP8，并不表示该层的输入接口、输出或持久状态也都是 FP8。** FP8 Linear 在内部动态量化输入，输出回到 BF16，具体转换见 2.1。
+
+| 对象 | 基础 profile 的保存 / 输出精度 | 说明 |
+| --- | --- | --- |
+| 文本 hidden、残差分支、Norm 输出、Attention / FFN 投影输出 | BF16 | Decoder 层间边界与子算子输出保持源码 dtype；FP32 临时计算完成后按第 2 部分回转 |
+| Vision hidden、视觉特征及多模态融合输出 | BF16 | Patch 输入先转投影权重 dtype；位置相加、Scatter 保持目标 hidden dtype |
+| LM Head 输出 logits | BF16 | 基础 profile 下按投影输出 dtype 返回；模型 forward 没有统一转 FP32 |
+| Full Attention 的 K/V cache | BF16 | 保持 K/V 投影路径的 dtype；K 在 QK Norm、RoPE 后写入，V 为投影结果 |
+| GDN Conv 历史 | BF16 | 保存投影后的 qkv 历史，遵循 cache 实现的实际 dtype；与 recurrent State 分别管理 |
+| GDN recurrent State | FP32 | 跨 Token / chunk 保留；形状 `[B,32,128,128]`，缺省初始值为 0 |
+| GDN 核心的 q/k/v、beta、g 及临时递推结果 | FP32 | 属于核心内部计算；核心输出回转 BF16，State 继续保存为 FP32 |
+| MoE Router Softmax 概率与选中权重重归一化 | FP32 | 属于 Router 临时计算；最终路由权重回转 BF16 |
+| Token ID、Torch TopK 专家索引 | int64 | 后端采用 uint32 等形式时显式检查范围并转换，比较逻辑索引值 |
+
+独立的 KV 量化或 FP8 激活存储方案使用单独的 profile / case 描述。FP32 排错 profile 也单独命名，reference 保留上述基础精度及源码中的转换位置。
+
+## 2. 算子内部的精度转换
+
+以下用 `BF16(x)` / `FP32(x)` 表示显式转换；表中的 BF16 对应基础 profile。函数名用于标明计算阶段，完整公式、维度和轴定义见 [numerics.json](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)。
+
+### 2.1 FP8 Linear 的输入量化与输出回转
+
+固定 FP8 集成接收 BF16 激活，在 GEMM 内部或前置步骤进行动态量化，计算结果回转 BF16：
+
+```text
+x_bf16
+    → dynamic_quantize(x_bf16) → (x_fp8, activation_scale)
+    → GEMM(x_fp8, W_fp8, activation_scale, weight_scale)
+    → y_bf16
+```
+
+动态量化根据当前输入计算 scale，再把输入量化为 FP8；它包含数值缩放和舍入。固定集成描述按 Token / K 分组的动态激活量化，并将具体计算交给 DeepGEMM 或 finegrained-fp8 等 kernel。实际 scale 表示、分组、舍入、截断和 GEMM 累加精度须随所选 kernel 版本及设备记录，配置中的 FP8 dtype 不能单独确定这些行为。[来源：FP8 Linear 集成](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L179-L282)。
+
+下一步可在 LPUv2 中尝试由生产者直接输出 `FP8 数据 + scale`，供兼容的消费者复用；候选方案见 [FP8 激活存储、量化融合与复用](fp8-activation-storage.md)。当前 reference 继续保留上述 BF16 接口和动态量化位置。
+
+### 2.2 Norm 的转换顺序
+
+普通 RMSNorm 与 GDN gated Norm 的转换顺序不同，需要分别实现。普通 RMSNorm 用于 Decoder、Q/K 及 Final Norm，权重采用 `1 + weight`：
+
+```text
+x32 = FP32(x_bf16)
+n32 = x32 * rsqrt(mean(x32 * x32, axis=-1) + 1e-6)
+y_bf16 = BF16(n32 * (1 + FP32(weight_bf16)))
+```
+
+GDN gated Norm 使用直接权重，并在乘权重之前先发生一次 BF16 舍入：
+
+```text
+o32 = FP32(core_output_bf16)
+n32 = o32 * rsqrt(mean(o32 * o32, axis=-1) + 1e-6)
+u_bf16 = weight_bf16 * BF16(n32)
+y_bf16 = BF16(u_bf16 * SiLU(FP32(z_bf16)))
+```
+
+两条路径中的 BF16 回转位置都是基线的一部分，融合 kernel 时保留对应舍入。Vision LayerNorm 按固定 `torch.nn.LayerNorm` 执行，输入、参数和输出为 BF16，具体归约累加实现随 Torch / device 后端记录。[来源：普通 RMSNorm](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L914-L931)、[GDN gated Norm](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L206-L222)。
+
+### 2.3 Attention、GDN、MoE 与 Vision 的转换点
+
+| 位置 | 输入 → 计算与转换 → 输出 / 状态 |
 | --- | --- |
-| 模型与权重 | [Qwen/Qwen3.6-35B-A3B-FP8](https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/tree/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2)；revision `c653bba46dfa06e9658dcc0b0dc87fe4685f14a2` |
-| 官方模型配置 | [config.json](https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/config.json)，本地保存原始字节及SHA-256 |
-| 官方生成默认值 | [generation_config.json](https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/generation_config.json)，本地保存原始字节 |
-| 模型源码 | [Transformers `f90e93c4f839`](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py) |
-| FP8加载/运算集成 | [finegrained_fp8](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py)、[quantizer](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/quantizers/quantizer_finegrained_fp8.py) |
-| 权重索引与header | [固定权重索引](https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/model.safetensors.index.json)；全部42个header已和索引逐key核对 |
+| Text MRoPE | position / 频率计算 → FP32 cos/sin → 转 Q/K dtype 后执行旋转；输出 Q/K 为 BF16 |
+| Text / Vision eager Attention | BF16 Q/K → score 与 mask → `Softmax(score, dtype=FP32)` → 转 query dtype BF16 → 与 BF16 V 相乘；Softmax 的 FP32 转换发生在 score 已生成之后 |
+| GDN Conv | qkv → 转 Conv 权重 dtype BF16 → Conv / SiLU → 转回输入 qkv dtype BF16 |
+| GDN beta | `sigmoid(b_bf16)` 得到 BF16 beta → 进入 delta-rule 核心时转 FP32 |
+| GDN g | `-exp(FP32(A_log)) * softplus(FP32(a) + dt_bias)` → FP32 g |
+| GDN 核心与 State | q/k/v、beta、g 转 FP32 → Q/K L2Norm 及 recurrent / chunk 计算 → 核心输出转原 query dtype BF16；最终 State 保持 FP32 |
+| MoE Router | BF16 输入 × BF16 Router 权重 → BF16 logits → FP32 Softmax / Top-8 权重重归一化 → 路由权重转 logits dtype BF16；索引为 int64 |
+| MoE Gate / Up → Down | FP8 Gate/Up 投影各输出 BF16 → `SiLU(gate) * up`，保留各步 BF16 输出 → Down 输入动态量化为 FP8 → Down 输出 BF16 |
+| MoE 专家结果合并 | 专家输出 × 路由权重 → 转输出 buffer dtype BF16 后 `index_add`；shared 分支的 BF16 标量门控与输出按源码相乘后合并 |
+| Vision Patch / 位置 | 图像 Patch 转投影权重 dtype BF16 → 投影得到 BF16 hidden；位置插值结果转 hidden dtype BF16 后相加 |
+| Vision axial RoPE | Q/K、cos/sin 显式转 FP32 → 旋转计算 → 分别转回 Q/K 原 dtype BF16 |
+| Vision MLP / Merger | BF16 Linear → GELU → BF16 Linear；保留激活输出 dtype，block 使用 GELU(tanh)，Merger 使用 GELU exact |
+| BF16 投影、Residual、Embedding / Scatter | 按源码保持 BF16 输出边界；底层 GEMM / 归约内部累加精度随实际后端记录 |
 
-checkpoint记录的`transformers_version`为`4.57.1`，所固定源码自身版本为`5.22.0.dev0`。源码commit是本基线的参考依据；配置中的版本字符串保留为checkpoint元数据。后续运行还需记录实际Torch、依赖kernel、device和后端版本。
-
-## 模型结构
-
-官方配置的实现类名为 `Qwen3_5MoeForConditionalGeneration`；这里按该实现族读取已固定的 Qwen3.6 checkpoint，模型身份仍由仓库名和revision确定。
-
-| 模块 | 固定内容 |
-| --- | --- |
-| 文本主干 | hidden2048，40层；[GDN,GDN,GDN,Full Attention]×10；每层MoE；前置Norm与两次残差 |
-| Full Attention | Q16/KV2，head_dim256，GQA8；Q/gate投影8192；每head内部512拆256+256；Partial MRoPE旋转64维 |
-| GDN | Q/K16 heads、V32 heads，均128维；qkv8192、z4096、a/b各32；Conv核4且无bias；FP32 State[B,32,128,128]；chunk默认64 |
-| MoE | 256个routed专家，Top-8；1个shared专家；中间维度512；shared gate每Token一个标量 |
-| Vision | 27 blocks，hidden1152，16 heads/head_dim72；Patch[3,2,16,16]；MLP1152→4304→1152 |
-| Vision Merger | 1152维LayerNorm→相邻2×2 Patch拼接4608→Linear4608→GELU→Linear2048 |
-| 输出 | 词表248320；Embedding和LM Head权重独立 |
-| MTP | 配置为1层；checkpoint包含1560个MTP张量，fc权重[2048,4096]；执行reference范围见后文 |
-
-## 存储dtype与运算dtype
-
-已读取42个safetensors header，共64,196个张量；未加载张量payload。header及索引SHA保存在[checkpoint_metadata.json](../configs/models/qwen3_6_35b_a3b_fp8/checkpoint_metadata.json)。
-
-| 对象 | 核对结果 / 执行规则 |
-| --- | --- |
-| checkpoint FP8张量 | 31,745个，safetensors dtype为F8_E4M3；对应Torch float8_e4m3fn |
-| checkpoint BF16张量 | 32,451个，其中31,745个是weight_scale_inv；其余706个为非scale张量 |
-| Embedding / LM Head / Vision | checkpoint为BF16；各层Norm、Router、GDN a/b、Conv等按相应张量元数据读取 |
-| weight_scale_inv存储 | 全部31,745个为BF16，形状与128×128分块逐一匹配 |
-| scale运行时 | 固定FP8Linear在默认scale_fmt=float下声明FP32参数；加载后记录实际dtype并保留checkpoint scale值 |
-| GDN State与核心递推 | FP32；A_log/dt_bias存为BF16并不改变源码显式float()后的运算规则 |
-
-基础BF16、权重FP8、scale存储dtype与归约/状态FP32分别记录。Reference保留官方源码里的cast位置；额外的全FP32排错路径须使用独立profile名称。
-
-默认KV cache保持K/V投影输出的dtype，在目标基础profile中为BF16；另行启用KV量化时记录独立case配置。Token ID与Torch TopK索引以int64表示，后端使用uint32等存储形式时显式检查范围并转换，比较其逻辑索引值。
-
-## 算子数值规则
-
-| 计算 | 基线规则 |
-| --- | --- |
-| 普通RMSNorm | eps=1e-6；输入转FP32，计算平方均值和rsqrt，乘1+weight.float()，最后转回输入dtype；用于Decoder、Q/K与Final Norm |
-| GDN输出gated Norm | 在128维做FP32平方均值归一化→先转回输入dtype→乘直接weight→乘SiLU(z.float())→转回输入dtype；没有+1 |
-| Vision LayerNorm | eps=1e-6，最后1152维、带weight和bias，方差correction=0；具体累加实现随Torch/device记录 |
-| Residual | 保留对应残差源，以源码张量dtype执行加法；两次残差分别使用各自输入 |
-| Full Attention | score缩放1/sqrt(256)；因果mask；eager Softmax在FP32计算再转query dtype；Q/K先Norm再RoPE，K此后进入cache |
-| Text MRoPE | theta=10,000,000；旋转64维，其余192维保留；THW分组[11,11,10]；频率/cos/sin在FP32计算后转输入dtype；rotate_half采用half-split配对 |
-| GDN Q/K | repeat_interleave到32 heads；FP32 L2Norm使用sum(x²)+1e-6；Q额外乘1/sqrt(128)，只缩放一次 |
-| GDN门控与状态 | beta=sigmoid(b)，核心再转FP32；g=-exp(A_log.float())×softplus(a.float()+dt_bias)；按衰减、预测、修正、更新、读出顺序维护FP32 State |
-| GDN chunk | 默认64；Q/K/V/beta/g尾块补0；块末State依次传递；与recurrent比较输出和最终State，浮点结果不要求逐bit一致 |
-| MoE Router | FP32 Softmax→Top-8→选中权重重归一化→转router_logits dtype；同值TopK顺序未由模型指定 |
-| Routed / Shared FFN | SiLU(gate)×up后down；routed输出乘对应路由权重再合并；shared使用独立权重和sigmoid标量gate |
-| Vision Attention | 每有效片段内非因果MHA，缩放1/sqrt(72)；axial RoPE使用完整72维，显式FP32计算后转回Q/K原dtype |
-| Vision位置 | 学习表[2304,1152]、二维bilinear插值、align_corners=True；按Patch顺序组织并转hidden dtype后相加 |
-| Vision激活 | block MLP为GELU(tanh)；Merger为GELU exact，均含两次线性投影的bias |
-| Embedding / Scatter / Head | 保持Token、视觉行和placeholder对应；Head为无bias线性投影，模型forward不无条件把logits转FP32 |
-
-逐项来源链接和完整cast顺序保存在[numerics.json](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)。Vision配置未显式给出的axial RoPE theta由固定配置类与[RoPE默认值](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/modeling_rope_utils.py#L753-L799)解析为10,000。
-
-## FP8与量化边界
-
-权重按[out_features,in_features]的128×128 block组织。对于weight[N,K]，scale形状为[ceil(N/128),ceil(K/128)]；全部31,745对权重/scale的shape已核对。概念恢复关系为：`W_real[n,k] = float(W_fp8[n,k]) * float(weight_scale_inv[n//128,k//128])`。保留checkpoint提供的scale值，不能根据`_inv`名字再取倒数，也不能用重新计算的absmax scale替代原值。
-
-官方配置保留648条不量化清单，包含别名；固定loader会正规化module名称。完整清单在[config.json](../configs/models/qwen3_6_35b_a3b_fp8/config.json)中。激活为动态量化；固定集成将运算交给DeepGEMM或finegrained-fp8等kernel。实际选择的kernel revision、device、动态scale/舍入/clip和GEMM累加行为随执行case记录。
-
-CPU或不具备目标能力的设备上，官方loader可能自动反量化到BF16。此路径可标记为反量化排错profile；FP8验收必须记录实际量化执行路径，不能把该回退结果登记为原生FP8结果。
-
-## MTP参考范围
-
-checkpoint确实含MTP权重：fc、前置两路Norm、输出Norm为BF16，MTP Attention/专家投影中包含FP8。固定Transformers源码在[PreTrainedModel](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L993-L1027)里忽略`^mtp.*`的unexpected keys，没有提供MTP前向实现。因此当前主干/视觉源码不能直接用作MTP golden。
-
-MTP任务开始前需另锁定支持MTP的reference，确认两路h/e位置、Norm权重解释、共享参数及draft状态规则；本基线先固定其配置和checkpoint元数据。OP-15/16及相关kernel仍为planned。
-
-## 运行与比较记录
-
-共同采用eval/inference语义，保留源码的dtype/cast。Attention数学reference采用固定eager路径；GDN采用固定Torch fallback recurrent/chunk；开启fused、FlashAttention或FP8专用kernel时记录对应版本和选择方式。官方[generation_config.json](../configs/models/qwen3_6_35b_a3b_fp8/generation_config.json)保持原样；greedy回归等覆盖作为case参数显式记录。
-
-每次比较记录输出名、shape/dtype、最大绝对/相对误差与最坏位置；路由索引、KV、State和Conv历史分别比较。整数及唯一确定的索引精确检查；同值TopK按固定后端语义处理。浮点atol/rtol随首个实际OP/后端/精度用例校准，当前为null，尚无统一的FP8容差承诺。
-
-当前交付为配置与规则整理：来源hash、全部分片header和结构一致性已核对；尚未实现golden、运行完整权重模型或执行PTO/LPU数值验收。
+Attention 的数学 reference 使用固定 eager 路径，GDN 使用固定 Torch recurrent / chunk fallback。具体 FP8 kernel 版本、运行环境、比较输出与误差记录遵循 [验证约定](validation.md)；CPU 反量化到 BF16 的排错路径单独登记。当前已完成来源和元数据核对，尚未实现 golden 或校准数值容差。

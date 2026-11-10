@@ -20,4 +20,4 @@
 
 `planned → golden_ready → pto_cpu_verified → subgraph_verified → model_verified` 表示推进方向。登记表保留golden、PTO实现、PTO验证和模型验证的独立字段，允许逐项推进。模型验证结果写明模型配置及执行场景。
 
-当前只搭建框架。首次实现PR同时接入必要的构建与测试入口，届时再建立实际数值CI。
+公共用例、执行、比较与产物入口已建立，先运行 `python -m pytest tests/framework -q`。首次算子实现PR按[验证约定](docs/validation.md)接入独立reference和实际后端，同时增加必要的构建、数值测试与CI。

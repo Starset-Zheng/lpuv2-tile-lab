@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "case_id": "op04-residual-bf16-small",
+  "op_id": "OP-04",
+  "kernel_id": "K-NRM-03",
+  "numerical_profile": "qwen3_6_35b_a3b_fp8-v1",
+  "seed": 17,
+  "parameters": {"rows": 3, "cols": 17},
+  "outputs": {"out": {"atol": 0.0, "rtol": 0.0}}
+}

@@ -1,3 +1,5 @@
 # 本地实验产物
 
-后续运行的输入、golden、actual、manifest及日志写在这里，默认被git忽略。公共复现需要的小型数据应另经对应任务选择后提交。
+`run_case`默认在本目录下按 `<case_id>/<run_id>/` 保存输入、reference、actual、manifest、比较报告和日志。tensor文件保留BF16/FP32/整数dtype；异常时保留已完成阶段的产物。
+
+运行产物默认被git忽略。复现方式见[验证框架](../docs/validation.md)。
