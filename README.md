@@ -20,6 +20,10 @@ git submodule update --init --recursive
 
 PTO固定在 `90a3796597a5fabc2ce5066e73f785c2e85822f7`，来源为公开 [hw-native-sys/pto-isa](https://github.com/hw-native-sys/pto-isa)。当前PTO目录覆盖139个core参考条目（136个core公开API名）及12个通信接口。语义变体、兼容名和命名空间重名在目录中分别记录。
 
+## 模型与数值基线
+
+模型固定为 **Qwen/Qwen3.6-35B-A3B-FP8**。共同基线放在 [configs/models/qwen3_6_35b_a3b_fp8/](configs/models/qwen3_6_35b_a3b_fp8/)，包含官方配置快照、模型/源码revision、checkpoint dtype元数据和数值规则。两人实现reference前阅读 [模型与数值基线](docs/model-numerical-baseline.md)。当前尚未实现golden或完成模型数值验证。
+
 ## 目录
 
 ```text

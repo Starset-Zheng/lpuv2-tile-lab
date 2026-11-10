@@ -1,3 +1,5 @@
 # 配置
 
-保存模型公开基线及后续kernel运行配置。运行配置应包含shape/dtype、Tile物理/有效尺寸、布局、参考版本、随机种子及比较阈值。权重与运行产物保存在仓库外。
+模型与数值基线放在 [models/qwen3_6_35b_a3b_fp8/](models/qwen3_6_35b_a3b_fp8/)，包括官方配置快照、固定revision、checkpoint元数据和数值契约。说明见 [模型与数值基线](../docs/model-numerical-baseline.md)。
+
+后续kernel运行配置也放在本目录，记录后端、dtype、Tile物理/有效尺寸与布局。具体某次输入、seed和边界场景放在 `cases/`；运行输出放在 `artifacts/`。模型权重保存在仓库外。

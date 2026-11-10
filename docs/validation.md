@@ -1,5 +1,7 @@
 # 验证约定
 
+共同遵循 [模型与数值基线](model-numerical-baseline.md) 和 [数值契约](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)。基线锁定配置、权重revision及参考源码；具体FP8执行后端与浮点容差随实际case确认。
+
 | 层级 | 比较对象 | 完成时记录 |
 | --- | --- | --- |
 | Golden | 固定参考函数/官方实现与独立reference | 来源revision、配置、dtype、公式及中间结果 |

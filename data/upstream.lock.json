@@ -6,8 +6,9 @@
     "path": "third_party/pto-isa"
   },
   "model_reference": {
-    "url": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py",
-    "commit": "f90e93c4f83974f634860e246cdfd2c68666d605",
-    "config_url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/config.json"
+    "model_id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "model_revision": "c653bba46dfa06e9658dcc0b0dc87fe4685f14a2",
+    "baseline": "configs/models/qwen3_6_35b_a3b_fp8/baseline.json",
+    "numerics": "configs/models/qwen3_6_35b_a3b_fp8/numerics.json"
   }
 }

@@ -7,3 +7,16 @@ Its source, documentation and license remain in the upstream repository:
 - [PTO LICENSE](third_party/pto-isa/LICENSE)
 
 This repository's Python/kernel directory organization is inspired by pymodel's separation of responsibilities. Internal pymodel source and its LPUv1 task binary ABI are not included.
+
+## Model configuration and reference metadata
+
+The unmodified `config.json` and `generation_config.json` snapshots under
+`configs/models/qwen3_6_35b_a3b_fp8/` come from
+[Qwen/Qwen3.6-35B-A3B-FP8](https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/tree/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2),
+revision `c653bba46dfa06e9658dcc0b0dc87fe4685f14a2`.
+Model weights are not included. Header-derived metadata records storage dtype and shape only.
+
+Numerical descriptions reference
+[Hugging Face Transformers](https://github.com/huggingface/transformers/tree/f90e93c4f83974f634860e246cdfd2c68666d605),
+commit `f90e93c4f83974f634860e246cdfd2c68666d605`.
+Source URLs and SHA-256 values are recorded in `baseline.json`; source implementation files are not vendored here.

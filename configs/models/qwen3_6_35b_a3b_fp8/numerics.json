@@ -1,0 +1,339 @@
+{
+  "schema_version": 1,
+  "baseline_id": "qwen3_6_35b_a3b_fp8-v1",
+  "status": "model_semantics_locked_backend_results_not_calibrated",
+  "source_of_truth": "config.json + immutable checkpoint revision + pinned reference source; backend choices recorded per case",
+  "dtype_policy": {
+    "base_model_dtype": "bfloat16",
+    "checkpoint_storage": {
+      "BF16": 32451,
+      "F8_E4M3": 31745
+    },
+    "checkpoint_scale_dtype": "bfloat16",
+    "default_loader_scale_declaration": "FP8Linear creates float32 scales for default scale_fmt=float; record materialized dtype after loading",
+    "default_loader_scale_source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L394-L430",
+    "rule": "Keep checkpoint scale values and all source cast boundaries; FP32 debug arithmetic is a separately labelled profile"
+  },
+  "ordinary_rmsnorm": {
+    "operators": [
+      "OP-02"
+    ],
+    "call_sites": [
+      "Decoder pre-norm",
+      "Q/K head norm",
+      "Final Norm"
+    ],
+    "epsilon": 1e-06,
+    "axis": -1,
+    "square_mean_dtype": "float32",
+    "weight_parameterization": "1 + weight.float()",
+    "operation_order": [
+      "x.float()",
+      "x_fp32 * rsqrt(mean(x_fp32**2)+eps)",
+      "multiply by (1+weight.float())",
+      "cast to x.dtype"
+    ],
+    "source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L914-L931"
+  },
+  "gdn_gated_rmsnorm": {
+    "operator": "OP-06",
+    "epsilon": 1e-06,
+    "axis": -1,
+    "axis_width": 128,
+    "weight_parameterization": "direct weight; no +1",
+    "operation_order": [
+      "normalize o.float() with mean-square and rsqrt",
+      "cast normalized result to input dtype",
+      "multiply direct stored weight",
+      "multiply SiLU(z.float())",
+      "cast back to input dtype"
+    ],
+    "source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L206-L222"
+  },
+  "layernorm": {
+    "operator": "OP-03",
+    "axis": -1,
+    "axis_width": 1152,
+    "epsilon": 1e-06,
+    "affine_weight_and_bias": true,
+    "definition": "torch.nn.LayerNorm; use variance with correction=0",
+    "accumulation_implementation": "delegated to the recorded PyTorch/device backend",
+    "sources": [
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L1176-L1203",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L1063-L1076"
+    ]
+  },
+  "residual": {
+    "operator": "OP-04",
+    "definition": "same-shape residual + branch in source input dtype; two distinct residual sources per Decoder block",
+    "source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L947-L990"
+  },
+  "full_attention": {
+    "operator": "OP-05",
+    "causal": true,
+    "scale": "1/sqrt(256)",
+    "dropout_inference": 0.0,
+    "q_gate_split": "per-head final dimension 512 -> [q256, gate256]",
+    "qk_norm": "ordinary_rmsnorm",
+    "softmax_accumulation_dtype": "float32",
+    "softmax_output_dtype": "query.dtype",
+    "kv_cache_dtype": "K/V projection output dtype; BF16 in the target base profile, without an independently requested KV quantization mode",
+    "kv_cache": "store K after Q/K norm and RoPE; V after projection; retain current and valid past positions",
+    "gqa": "kv_head = query_head // 8",
+    "output": "attention_context * sigmoid(gate), then output projection",
+    "sources": [
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L738-L812",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L713-L735"
+    ]
+  },
+  "text_rope": {
+    "operator": "OP-05",
+    "rotary_dim": 64,
+    "unrotated_tail_dim": 192,
+    "rope_theta": 10000000,
+    "frequency_dtype": "float32",
+    "cos_sin_output_dtype": "input dtype",
+    "rotation_pairing": "rotate_half: [-second_half, first_half]",
+    "mrope_axes": [
+      "temporal",
+      "height",
+      "width"
+    ],
+    "mrope_section": [
+      11,
+      11,
+      10
+    ],
+    "mrope_interleaved": true,
+    "interpretation": "interleaved selects THW frequency positions; preserve the pinned frequency recomposition and rotate_half pairing",
+    "sources": [
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L137-L201",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L663-L698"
+    ]
+  },
+  "gdn": {
+    "operator": "OP-06",
+    "qk_repeat_factor": 2,
+    "qk_repeat_axis": "head",
+    "l2_norm": {
+      "axis": -1,
+      "accumulation_dtype": "float32",
+      "epsilon": 1e-06,
+      "definition": "x * rsqrt(sum(x*x)+eps); not mean-square RMSNorm"
+    },
+    "q_scale": "1/sqrt(128), exactly once",
+    "beta": "sigmoid(b) in projection output dtype, then converted to float32 by delta-rule core",
+    "log_decay": "-exp(A_log.float()) * softplus(a.float() + dt_bias)",
+    "conv": {
+      "kernel": 4,
+      "groups": 8192,
+      "bias": false,
+      "activation": "silu",
+      "compute_input_cast": "conv weight dtype",
+      "output_cast": "incoming projected hidden dtype",
+      "logical_history_length": 3,
+      "physical_cache_shape": "follow selected cache implementation"
+    },
+    "core_input_dtype": "float32",
+    "state_dtype": "float32",
+    "initial_state": "zero if absent; otherwise preserve supplied per-layer/request state",
+    "state_shape": [
+      "B",
+      32,
+      128,
+      128
+    ],
+    "recurrent_order": [
+      "decay",
+      "predict",
+      "delta",
+      "outer-product update",
+      "read updated state"
+    ],
+    "chunk_size_default": 64,
+    "padding_values": {
+      "q": 0,
+      "k": 0,
+      "v": 0,
+      "beta": 0,
+      "g": 0
+    },
+    "core_output_cast": "original query dtype",
+    "output_norm": "gdn_gated_rmsnorm",
+    "recurrent_chunk_comparison": "same real-arithmetic rule; compare outputs and final FP32 state with separately calibrated floating tolerances, not bitwise equality",
+    "sources": [
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L492-L652",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L426-L485",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L289-L422"
+    ]
+  },
+  "moe": {
+    "operator": "OP-07",
+    "router_prob_dtype": "float32",
+    "selection": "softmax -> topk(k=8) -> renormalize selected probabilities",
+    "selected_weight_cast": "router_logits.dtype after renormalization",
+    "expert_index_dtype": "int64 from torch.topk; backend uint32 representations require explicit checked-range conversion",
+    "expert_ffn": "down(silu(gate(x))*up(x)); 2048 -> 512 -> 2048",
+    "weighted_combine": "apply selected route weight to each expert output; cast to output buffer dtype before index_add in eager reference",
+    "shared_branch": "sigmoid(one scalar per Token) * independently weighted shared FFN",
+    "topk_ties": {
+      "status": "not_specified_by_model",
+      "reference_operator": "torch.topk",
+      "policy": "record device/backend and tie cases; do not impose a new index tie-break silently"
+    },
+    "sources": [
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L872-L888",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L832-L868",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L891-L910"
+    ]
+  },
+  "vision": {
+    "operators": [
+      "OP-03",
+      "OP-08",
+      "OP-09",
+      "OP-10",
+      "OP-11",
+      "OP-12"
+    ],
+    "checkpoint_weight_dtype": "BF16",
+    "patch_input_cast": "patch projection weight dtype",
+    "patch_projection_bias": true,
+    "attention_causal": false,
+    "attention_scale": "1/sqrt(72)",
+    "attention_partition": "each valid sequence/segment only",
+    "attention_softmax": "eager_attention_forward: FP32 softmax, cast to query dtype",
+    "block_mlp": {
+      "dimensions": [
+        1152,
+        4304,
+        1152
+      ],
+      "bias": true,
+      "activation": "GELU approximate=tanh"
+    },
+    "merger": {
+      "norm_before_shuffle": true,
+      "norm_width": 1152,
+      "epsilon": 1e-06,
+      "dimensions": [
+        4608,
+        4608,
+        2048
+      ],
+      "bias": true,
+      "activation": "GELU approximate=none"
+    },
+    "learned_position_interpolation": {
+      "mode": "bilinear",
+      "align_corners": true,
+      "table_shape": [
+        2304,
+        1152
+      ],
+      "output_add_cast": "patch hidden dtype"
+    },
+    "axial_rope": {
+      "axes": [
+        "height",
+        "width"
+      ],
+      "rope_theta": 10000.0,
+      "rotary_dim": 72,
+      "operation_dtype": "float32",
+      "output_cast": "original q/k dtypes"
+    },
+    "sources": [
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L1206-L1289",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L1030-L1040",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L1063-L1076",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L1079-L1090",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/configuration_qwen3_5_moe.py#L136-L161",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/modeling_rope_utils.py#L753-L799"
+    ]
+  },
+  "embedding_scatter_concat_head": {
+    "operators": [
+      "OP-01",
+      "OP-13",
+      "OP-14",
+      "OP-15",
+      "OP-16"
+    ],
+    "embedding_and_lm_head_checkpoint_dtype": "BF16",
+    "token_id_reference_dtype": "int64",
+    "lm_head_bias": false,
+    "embedding_lm_head_weights_tied": false,
+    "scatter": "preserve visual-feature and placeholder order; preserve unaffected text rows",
+    "concat": "logical [e_norm;h_norm] for MTP input; execution reference must confirm parameter mapping",
+    "lm_head": "linear projection without bias; selected positions; no unconditional FP32 logits cast in model forward"
+  },
+  "fp8": {
+    "format": "torch.float8_e4m3fn / checkpoint F8_E4M3",
+    "weight_block_size": [
+      128,
+      128
+    ],
+    "checkpoint_scale_dtype": "BF16",
+    "scale_shape": "[ceil(N/128),ceil(K/128)] for weight[N,K]",
+    "dequantization_identity": "W_real[n,k] = float(W_fp8[n,k]) * float(weight_scale_inv[n//128,k//128])",
+    "scale_values": "reuse checkpoint values; do not recompute, invert, or replace them merely because the suffix is _inv",
+    "activation_scheme": "dynamic; the fixed integration describes per-token/per-K-block activation quantization",
+    "output_dtype": "input dtype for the fixed finegrained_fp8_linear path",
+    "runtime_backend": "record exact selected kernel, version, device and implementation; pinned integration can dispatch between DeepGEMM and finegrained-fp8",
+    "rounding_clipping_and_gemm_accumulation": "follow the selected implementation and record it; these are not fully specified by config.json alone",
+    "no_silent_dequant_fallback_for_fp8_acceptance": true,
+    "skip_list": "use config.json quantization_config.modules_to_not_convert via pinned loader normalization",
+    "sources": [
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L179-L205",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L208-L282",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L285-L303",
+      "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/quantizers/quantizer_finegrained_fp8.py#L18-L186"
+    ]
+  },
+  "mtp": {
+    "operators": [
+      "OP-15",
+      "OP-16"
+    ],
+    "weights_present": true,
+    "fc_and_norm_storage_dtype": "BF16",
+    "source_runtime_status": "separate_reference_required",
+    "reason": "The locked Transformers model ignores mtp keys; do not promote its main-body forward to MTP golden",
+    "required_before_golden": "pin an MTP-capable execution reference and verify norm weight interpretation, h/e alignment, parameter sharing and draft-state update"
+  },
+  "reference_execution_conventions": {
+    "origin": "project_convention",
+    "inference_mode": true,
+    "training": false,
+    "autocast": "no blanket override; preserve each source cast boundary",
+    "attention_math_reference": "pinned eager_attention_forward",
+    "gdn_math_reference": "pinned Torch fallback recurrent/chunk functions; no implicit fused substitution",
+    "fp32_debug_profile": "allowed only with a distinct label; not the BF16/FP8 target golden",
+    "native_fp8_profile": "required to validate activation quantization and target FP8 behavior; never label BF16-dequantized CPU execution as native FP8"
+  },
+  "comparison_policy": {
+    "integer_and_index_outputs": "exact when uniquely specified; handle tied TopK according to recorded backend semantics",
+    "floating_outputs": "compare in a common floating analysis dtype without changing the execution arithmetic",
+    "required_outputs": [
+      "output tensors",
+      "routing IDs/weights when applicable",
+      "K/V cache",
+      "GDN State",
+      "Conv history"
+    ],
+    "metrics": [
+      "max_absolute_error",
+      "max_relative_error",
+      "failed_output_name",
+      "worst_index"
+    ],
+    "tolerances": {
+      "status": "not_calibrated",
+      "atol": null,
+      "rtol": null,
+      "rule": "set per OP/output/backend/dtype and representative cases after first execution; do not invent a universal FP8 tolerance"
+    },
+    "nonfinite_values": "record and check explicitly; never silently treat arbitrary NaNs as matching"
+  }
+}

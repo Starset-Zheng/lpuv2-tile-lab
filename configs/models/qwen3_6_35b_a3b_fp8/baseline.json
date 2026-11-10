@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "baseline_id": "qwen3_6_35b_a3b_fp8-v1",
+  "baseline_version": 1,
+  "created_date": "2026-11-10",
+  "status": "configuration_source_and_checkpoint_metadata_locked",
+  "model": {
+    "id": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "revision": "c653bba46dfa06e9658dcc0b0dc87fe4685f14a2",
+    "architecture": "Qwen3_5MoeForConditionalGeneration",
+    "config_snapshot": "config.json",
+    "generation_config_snapshot": "generation_config.json",
+    "checkpoint_metadata": "checkpoint_metadata.json",
+    "numerical_contract": "numerics.json",
+    "weights_location": "external; not stored in this repository",
+    "input_boundary": "token IDs or processor-produced visual patches plus position/grid metadata",
+    "processor_revision": "c653bba46dfa06e9658dcc0b0dc87fe4685f14a2"
+  },
+  "reference": {
+    "repository": "https://github.com/huggingface/transformers",
+    "commit": "f90e93c4f83974f634860e246cdfd2c68666d605",
+    "source_package_version": "5.22.0.dev0",
+    "config_recorded_transformers_version": "4.57.1",
+    "version_policy": "The source commit is authoritative; config.transformers_version is checkpoint metadata, not an installation pin",
+    "model_source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py",
+    "configuration_source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/configuration_qwen3_5_moe.py",
+    "fp8_integration_source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py",
+    "fp8_loader_source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/quantizers/quantizer_finegrained_fp8.py",
+    "runtime_environment_status": "not_executed_or_validated",
+    "mtp_support": {
+      "status": "separate_reference_required",
+      "evidence": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L993-L1027",
+      "reason": "The pinned Transformers model ignores unexpected ^mtp.* keys and provides no MTP forward graph; config and checkpoint contain MTP, but this is not an executable MTP reference"
+    }
+  },
+  "structure": {
+    "text": {
+      "hidden_size": 2048,
+      "vocab_size": 248320,
+      "layers": 40,
+      "layer_types_pointer": "config.json#/text_config/layer_types",
+      "gdn_layers": 30,
+      "full_attention_layers": 10,
+      "full_attention_layer_indices_zero_based": [
+        3,
+        7,
+        11,
+        15,
+        19,
+        23,
+        27,
+        31,
+        35,
+        39
+      ],
+      "tie_word_embeddings": false,
+      "base_dtype": "bfloat16"
+    },
+    "full_attention": {
+      "query_heads": 16,
+      "kv_heads": 2,
+      "head_dim": 256,
+      "gqa_ratio": 8,
+      "query_gate_projection_width": 8192,
+      "query_gate_split": "reshape to [...,16,512], then split the final dimension into 256+256 per head",
+      "rotary_dim": 64,
+      "output_gate": true,
+      "attention_bias": false,
+      "dropout": 0.0,
+      "rope": {
+        "mrope_interleaved": true,
+        "mrope_section": [
+          11,
+          11,
+          10
+        ],
+        "partial_rotary_factor": 0.25,
+        "rope_theta": 10000000,
+        "rope_type": "default"
+      }
+    },
+    "gdn": {
+      "qk_heads": 16,
+      "value_heads": 32,
+      "key_head_dim": 128,
+      "value_head_dim": 128,
+      "qkv_projection_width": 8192,
+      "z_projection_width": 4096,
+      "a_b_projection_width_each": 32,
+      "conv_kernel_size": 4,
+      "conv_channels": 8192,
+      "conv_bias": false,
+      "logical_history_values_per_channel": 3,
+      "state_shape": [
+        "B",
+        32,
+        128,
+        128
+      ],
+      "state_dtype": "float32",
+      "chunk_size_source_default": 64
+    },
+    "moe": {
+      "routed_experts": 256,
+      "selected_experts_per_token": 8,
+      "expert_intermediate_size": 512,
+      "shared_experts": 1,
+      "shared_expert_intermediate_size": 512,
+      "shared_gate_shape_per_token": [
+        1
+      ]
+    },
+    "vision": {
+      "layers": 27,
+      "hidden_size": 1152,
+      "heads": 16,
+      "head_dim": 72,
+      "intermediate_size": 4304,
+      "in_channels": 3,
+      "temporal_patch_size": 2,
+      "spatial_patch_size": 16,
+      "patch_flatten_width": 1536,
+      "spatial_merge_size": 2,
+      "merger_flatten_width": 4608,
+      "out_hidden_size": 2048,
+      "learned_position_count": 2304,
+      "learned_position_grid": [
+        48,
+        48
+      ],
+      "block_activation": "gelu_pytorch_tanh",
+      "merger_activation": "gelu_exact",
+      "effective_rope_type": "axial",
+      "effective_rope_theta": 10000.0,
+      "rope_default_source": "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/modeling_rope_utils.py#L753-L799"
+    },
+    "mtp": {
+      "layers": 1,
+      "dedicated_embeddings": false,
+      "fc_weight_shape": [
+        2048,
+        4096
+      ],
+      "checkpoint_tensor_count": 1560,
+      "golden_status": "not_implemented",
+      "execution_reference_status": "separate_reference_required"
+    }
+  },
+  "quantization": {
+    "method": "fp8",
+    "config_format": "e4m3",
+    "checkpoint_weight_dtype": "F8_E4M3",
+    "torch_fp8_dtype": "float8_e4m3fn",
+    "activation_scheme": "dynamic",
+    "weight_block_size": [
+      128,
+      128
+    ],
+    "weight_block_axes": [
+      "out_features",
+      "in_features"
+    ],
+    "checkpoint_scale_dtype": "BF16",
+    "checkpoint_scale_suffix": "weight_scale_inv",
+    "scale_shape": [
+      "ceil(out_features/128)",
+      "ceil(in_features/128)"
+    ],
+    "skip_list_pointer": "config.json#/quantization_config/modules_to_not_convert",
+    "skip_list_entries": 648,
+    "skip_list_resolution": "Use the pinned loader conversion mapping; raw checkpoint and live module aliases need normalization"
+  },
+  "snapshots": {
+    "config.json": {
+      "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/config.json",
+      "sha256": "570ef7ea45a7e1d3de2b1d3c70c4ac3562d0e768acdc195778cb4f4d95025845",
+      "bytes": 37000
+    },
+    "generation_config.json": {
+      "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/generation_config.json",
+      "sha256": "e70c136c1b78ddc1fb0905bac8e733a4dc448d4f852a5dd75143fffc70be550e",
+      "bytes": 202
+    },
+    "model.safetensors.index.json": {
+      "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/resolve/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2/model.safetensors.index.json",
+      "sha256": "6f176f344e41d35b17af12904e33401da5ebff3b49fccb8bfa0185bc2d50f9d6",
+      "bytes": 6329223
+    }
+  },
+  "source_files": {
+    "modeling_qwen3_5_moe.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py",
+      "sha256": "45a0f0d5ad9f6e2a57efec82da1b2b8d7f56f15b219ec741476117e2f58efcac",
+      "bytes": 96926
+    },
+    "finegrained_fp8.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py",
+      "sha256": "cad898137be9c473b92987aa21f57d43cc6987cb7293c2a0085c014b1a1e8499",
+      "bytes": 56395
+    },
+    "quantizer_finegrained_fp8.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/quantizers/quantizer_finegrained_fp8.py",
+      "sha256": "432c240dcd78dc369abd563f03462b6ed445816efd55c409af0965e39189f033",
+      "bytes": 7971
+    },
+    "transformers_init.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/__init__.py",
+      "sha256": "ce773e13b7fbe04e1350a6ebd30b2462b73ff90cf62beaf5e5c8ce20e389c40f",
+      "bytes": 38852
+    },
+    "quantization_config.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/utils/quantization_config.py",
+      "sha256": "94a6b8d9385564ea6bc847b6128596c486131fc439a336b5cbc71d10654cf371",
+      "bytes": 95126
+    },
+    "configuration_qwen3_5_moe.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/configuration_qwen3_5_moe.py",
+      "sha256": "697f1db9b92e91f39492d70b91f53f7eba4d84d1f19fec2f0d3b7053a0943110",
+      "bytes": 8535
+    },
+    "configuration_utils.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/configuration_utils.py",
+      "sha256": "9556007a5ae2a65b32ab1f3279a42d73c969845a14ece09f5dab98ba2e538878",
+      "bytes": 82309
+    },
+    "modeling_rope_utils.py": {
+      "url": "https://raw.githubusercontent.com/huggingface/transformers/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/modeling_rope_utils.py",
+      "sha256": "ddec71d6c9343af437f656812177fe5c98f6057fd5240c5cbf208520c2872745",
+      "bytes": 64783
+    }
+  },
+  "validation": {
+    "metadata_checked": true,
+    "tensor_payloads_loaded": false,
+    "golden_implemented": false,
+    "full_model_executed": false,
+    "pto_or_lpu_executed": false
+  }
+}
