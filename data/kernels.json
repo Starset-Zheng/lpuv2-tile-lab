@@ -1,498 +1,356 @@
 {
   "schema_version": 1,
   "phase": "framework",
+  "organization": "one_logical_kernel_per_operator",
+  "definition": "One complete logical kernel entry per OP; stages and prefill/decode or recurrent/chunk choices remain internal",
+  "id_migration_file": "legacy-kernel-map.json",
   "kernels": [
     {
-      "id": "K-EMB-01",
-      "name": "Embedding Gather",
+      "id": "K-01",
+      "name": "Token Embedding",
       "operator_ids": [
         "OP-01"
       ],
       "owner": "B",
-      "scope": "Token ID→embedding 行及输出组织",
-      "scenarios": "Prefill / Decode / MTP",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-NRM-01",
-      "name": "RMSNorm",
-      "operator_ids": [
-        "OP-02"
+      "scope": "Token ID检查；Embedding行Gather；输出组织",
+      "internal_steps": [
+        "Token ID检查",
+        "Embedding行Gather",
+        "输出组织"
       ],
-      "owner": "B",
-      "scope": "按 OP-02 的调用参数实现 RMSNorm",
-      "scenarios": "文本、Final Norm、MTP 及对应内部调用点",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-NRM-02",
-      "name": "LayerNorm",
-      "operator_ids": [
-        "OP-03"
+      "implementation_paths": [
+        "gather"
       ],
-      "owner": "A",
-      "scope": "均值/方差归约、归一化与仿射变换",
-      "scenarios": "对应文本/视觉/MTP 调用点",
+      "scenarios": "文本Prefill / Decode；MTP复用",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-NRM-03",
-      "name": "Residual Add",
-      "operator_ids": [
-        "OP-04"
-      ],
-      "owner": "A",
-      "scope": "独立残差相加",
-      "scenarios": "对应文本/视觉/MTP 调用点",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-NRM-04",
-      "name": "Residual Add + Norm",
-      "operator_ids": [
-        "OP-04",
-        "OP-02",
-        "OP-03"
-      ],
-      "owner": "B",
-      "scope": "在相邻关系成立的调用点评估残差与 RMSNorm 或 LayerNorm 融合，按 Norm 类型分别实现",
-      "scenarios": "对应文本/视觉/MTP 调用点",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-FA-01",
-      "name": "Attention 投影",
-      "operator_ids": [
-        "OP-05"
-      ],
-      "owner": "B",
-      "scope": "Q/gate、K/V 投影及拆分；评估联合投影",
-      "scenarios": "Prefill / Decode",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-FA-02",
-      "name": "Q/K Norm、RoPE 与 KV 写入",
-      "operator_ids": [
-        "OP-05"
-      ],
-      "owner": "B",
-      "scope": "Q/K head-wise RMSNorm、Partial MRoPE、当前 KV 写入",
-      "scenarios": "不同 Q/K head 数、历史位置",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-FA-03",
-      "name": "Prefill Attention",
-      "operator_ids": [
-        "OP-05"
-      ],
-      "owner": "B",
-      "scope": "QK、缩放、因果 mask、在线 Softmax 与 PV",
-      "scenarios": "多 query Token、历史或空 KV",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-FA-04",
-      "name": "Decode Attention",
-      "operator_ids": [
-        "OP-05"
-      ],
-      "owner": "B",
-      "scope": "单请求新 query 读取历史 KV，按 GQA 组织计算",
-      "scenarios": "每请求 1 个新 Token、多请求",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-FA-05",
-      "name": "Attention 输出",
-      "operator_ids": [
-        "OP-05"
-      ],
-      "owner": "B",
-      "scope": "sigmoid(gate) 逐元素门控、Wo 投影；残差可接 K-NRM-03/04",
-      "scenarios": "Prefill / Decode",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-01",
-      "name": "GDN 投影",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "qkv/z/a/b 投影与各分支组织",
-      "scenarios": "Prefill / Decode",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-02",
-      "name": "因果 Conv 与 SiLU",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "kernel=4 逐通道 Conv、SiLU 与历史更新",
-      "scenarios": "Prefill / 单 Token update",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-03",
-      "name": "Q/K 与门控准备",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "head 对应、L2Norm、Q 缩放、beta/g",
-      "scenarios": "FP32 归一化与门控计算规则核对",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-04",
-      "name": "Recurrent Delta Rule",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "衰减→预测→修正→外积更新→读出",
-      "scenarios": "带历史状态单 Token；连续序列参考",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-05",
-      "name": "Chunk 系数准备",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "块内前缀和、衰减、Gram 矩阵和三角系数",
-      "scenarios": "默认 c=64，含尾块",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-06",
-      "name": "Chunk 下三角求解",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "单位下三角系统的 U/W 求解",
-      "scenarios": "多个 head/chunk 和右端项",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-07",
-      "name": "Chunk 输出与状态传递",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "Delta、O 与 State_out 的矩阵运算",
-      "scenarios": "按 chunk 传递边界 State",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-GDN-08",
-      "name": "GDN 输出",
-      "operator_ids": [
-        "OP-06"
-      ],
-      "owner": "A",
-      "scope": "RMSNormGated、reshape 与 out_proj",
-      "scenarios": "32×128 输出合并成 4096 维",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-01",
-      "name": "Router 投影",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "hidden→256 个专家分数",
-      "scenarios": "Prefill / Decode",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-02",
-      "name": "路由选择",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "Softmax、Top-8、选中权重归一化",
-      "scenarios": "索引与权重关联输出",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-03",
-      "name": "专家 Dispatch",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "计数/分桶、Token 索引、激活与 scale Gather",
-      "scenarios": "动态 Ne、空专家",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-04",
-      "name": "专家 Gate/Up",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "2048→512 的两路投影，评估权重与输入复用",
-      "scenarios": "routed 按 Ne；shared 按 T",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-05",
-      "name": "SwiGLU",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "SiLU(Gate)×Up，可与后续量化结合",
-      "scenarios": "中间宽度 512",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-06",
-      "name": "专家 Down",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "512→2048 投影，routed 分支施加对应路由权重",
-      "scenarios": "routed/shared 使用独立权重",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-07",
-      "name": "专家 Combine",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "按原 Token 合并 routed 贡献，形成输出",
-      "scenarios": "结果归约；Atomic Add 为候选方案",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MOE-08",
-      "name": "Shared Gate 与合并",
-      "operator_ids": [
-        "OP-07"
-      ],
-      "owner": "B",
-      "scope": "每 Token 标量 gate、sigmoid、shared 输出缩放及合并",
-      "scenarios": "shared FFN 复用 Gate/Up、SwiGLU、Down 的组织",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-VIS-01",
-      "name": "Patch Embedding",
+      "id": "K-08",
+      "name": "Vision Patch Embedding",
       "operator_ids": [
         "OP-08"
       ],
       "owner": "A",
-      "scope": "时空 Patch 组织与 3→1152 Conv3D；评估矩阵乘映射",
-      "scenarios": "2×16×16 Patch",
+      "scope": "processor Patch组织；Patch投影及bias；1152维输出",
+      "internal_steps": [
+        "processor Patch组织",
+        "Patch投影及bias",
+        "1152维输出"
+      ],
+      "implementation_paths": [
+        "patch_projection"
+      ],
+      "scenarios": "3×2×16×16 Patch；BF16 Vision",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-VIS-02",
+      "id": "K-11",
       "name": "视觉位置嵌入",
       "operator_ids": [
         "OP-11"
       ],
       "owner": "A",
-      "scope": "二维位置嵌入插值和加法",
-      "scenarios": "可变视觉网格",
+      "scope": "由网格生成插值索引和FP32权重；四邻居Gather；位置插值；BF16转换后与hidden相加",
+      "internal_steps": [
+        "由网格生成插值索引和FP32权重",
+        "四邻居Gather",
+        "位置插值",
+        "BF16转换后与hidden相加"
+      ],
+      "implementation_paths": [
+        "bilinear_position"
+      ],
+      "scenarios": "可变图像/视频网格与merge行顺序",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-VIS-03",
-      "name": "视觉 QKV 与 RoPE",
+      "id": "K-03",
+      "name": "LayerNorm",
+      "operator_ids": [
+        "OP-03"
+      ],
+      "owner": "A",
+      "scope": "均值与方差归约；归一化；weight/bias仿射；BF16输出",
+      "internal_steps": [
+        "均值与方差归约",
+        "归一化",
+        "weight/bias仿射",
+        "BF16输出"
+      ],
+      "implementation_paths": [
+        "layernorm"
+      ],
+      "scenarios": "Vision block和相应调用点",
+      "implementation_status": "planned",
+      "validation_status": "planned",
+      "validation_evidence": []
+    },
+    {
+      "id": "K-09",
+      "name": "Vision Attention",
       "operator_ids": [
         "OP-09"
       ],
       "owner": "A",
-      "scope": "视觉 Q/K/V 投影和 axial RoPE",
-      "scenarios": "1152 hidden、16 heads",
+      "scope": "QKV投影；完整axial RoPE；分段非因果QK、Softmax和PV；输出投影",
+      "internal_steps": [
+        "QKV投影",
+        "完整axial RoPE",
+        "分段非因果QK、Softmax和PV",
+        "输出投影"
+      ],
+      "implementation_paths": [
+        "packed_noncausal"
+      ],
+      "scenarios": "Vision有效片段；16 heads、head_dim=72",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-VIS-04",
-      "name": "视觉 Attention",
+      "id": "K-04",
+      "name": "Residual Add",
       "operator_ids": [
-        "OP-09"
+        "OP-04"
       ],
       "owner": "A",
-      "scope": "非因果 MHA；有效片段与文本 attention 分别配置",
-      "scenarios": "逻辑 head_dim=72",
+      "scope": "检查同形同dtype输入；残差相加；结果返回",
+      "internal_steps": [
+        "检查同形同dtype输入",
+        "残差相加",
+        "结果返回"
+      ],
+      "implementation_paths": [
+        "residual_add"
+      ],
+      "scenarios": "文本 / Vision / MTP的相应调用点",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-VIS-05",
-      "name": "视觉 MLP",
+      "id": "K-10",
+      "name": "Dense FFN（GELU MLP）",
       "operator_ids": [
         "OP-10"
       ],
       "owner": "A",
-      "scope": "Linear→GELU→Linear；LayerNorm/残差引用 K-NRM-02/03/04",
-      "scenarios": "中间宽度由配置核对",
+      "scope": "第一层Linear及bias；GELU(tanh)；第二层Linear及bias",
+      "internal_steps": [
+        "第一层Linear及bias",
+        "GELU(tanh)",
+        "第二层Linear及bias"
+      ],
+      "implementation_paths": [
+        "gelu_mlp"
+      ],
+      "scenarios": "Vision 1152→4304→1152",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-VIS-06",
-      "name": "Spatial Merge / Projector",
+      "id": "K-12",
+      "name": "Spatial Merger / Projector",
       "operator_ids": [
         "OP-12"
       ],
       "owner": "A",
-      "scope": "相邻 2×2 Patch 分组与 2048 维输出投影",
-      "scenarios": "内部参数与布局在配置核对时补齐",
+      "scope": "每Patch LayerNorm；2×2行分组与拼接；Linear、GELU exact、Linear；2048维视觉特征输出",
+      "internal_steps": [
+        "每Patch LayerNorm",
+        "2×2行分组与拼接",
+        "Linear、GELU exact、Linear",
+        "2048维视觉特征输出"
+      ],
+      "implementation_paths": [
+        "spatial_merger"
+      ],
+      "scenarios": "Vision 4608→4608→2048",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-MM-01",
-      "name": "多模态融合",
+      "id": "K-13",
+      "name": "Visual Feature Scatter",
       "operator_ids": [
         "OP-13"
       ],
       "owner": "A",
-      "scope": "视觉特征按占位位置写入文本 embedding",
-      "scenarios": "图像/视频 Token 顺序",
+      "scope": "视觉特征与占位行关联；转换为目标hidden dtype；Scatter写入并保留其余文本行",
+      "internal_steps": [
+        "视觉特征与占位行关联",
+        "转换为目标hidden dtype",
+        "Scatter写入并保留其余文本行"
+      ],
+      "implementation_paths": [
+        "visual_scatter"
+      ],
+      "scenarios": "多图 / 视频 / 多batch / 空视觉输入",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-OUT-01",
-      "name": "词表投影",
+      "id": "K-02",
+      "name": "RMSNorm",
       "operator_ids": [
-        "OP-02",
+        "OP-02"
+      ],
+      "owner": "B",
+      "scope": "FP32均方归约；rsqrt归一化；1+weight仿射；转换为输入dtype",
+      "internal_steps": [
+        "FP32均方归约",
+        "rsqrt归一化",
+        "1+weight仿射",
+        "转换为输入dtype"
+      ],
+      "implementation_paths": [
+        "rmsnorm"
+      ],
+      "scenarios": "Decoder、Q/K、Final Norm和MTP的对应调用点",
+      "implementation_status": "planned",
+      "validation_status": "planned",
+      "validation_evidence": []
+    },
+    {
+      "id": "K-06",
+      "name": "Gated DeltaNet 线性注意力",
+      "operator_ids": [
+        "OP-06"
+      ],
+      "owner": "A",
+      "scope": "qkv/z/a/b投影；因果Conv与SiLU及历史更新；Q/K head组织、L2Norm与门控；recurrent递推或chunk系数、三角求解与状态传递；gated Norm与输出投影",
+      "internal_steps": [
+        "qkv/z/a/b投影",
+        "因果Conv与SiLU及历史更新",
+        "Q/K head组织、L2Norm与门控",
+        "recurrent递推或chunk系数、三角求解与状态传递",
+        "gated Norm与输出投影"
+      ],
+      "implementation_paths": [
+        "recurrent",
+        "chunk"
+      ],
+      "scenarios": "GDN Prefill / 连续Decode；FP32 State与Conv历史",
+      "implementation_status": "planned",
+      "validation_status": "planned",
+      "validation_evidence": []
+    },
+    {
+      "id": "K-05",
+      "name": "Full Attention",
+      "operator_ids": [
+        "OP-05"
+      ],
+      "owner": "B",
+      "scope": "Q/gate、K/V投影；Q/K Norm与Partial MRoPE；KV读取与更新；QK、mask、Softmax、PV；输出门控与输出投影",
+      "internal_steps": [
+        "Q/gate、K/V投影",
+        "Q/K Norm与Partial MRoPE",
+        "KV读取与更新",
+        "QK、mask、Softmax、PV",
+        "输出门控与输出投影"
+      ],
+      "implementation_paths": [
+        "prefill",
+        "decode"
+      ],
+      "scenarios": "文本因果Full Attention；历史KV与GQA",
+      "implementation_status": "planned",
+      "validation_status": "planned",
+      "validation_evidence": []
+    },
+    {
+      "id": "K-07",
+      "name": "MoE FFN",
+      "operator_ids": [
+        "OP-07"
+      ],
+      "owner": "B",
+      "scope": "Router投影与Softmax；Top-8与权重归一化；按专家分桶与Gather；专家Gate/Up、SwiGLU和Down；按原Token合并贡献；shared专家和标量门控合并",
+      "internal_steps": [
+        "Router投影与Softmax",
+        "Top-8与权重归一化",
+        "按专家分桶与Gather",
+        "专家Gate/Up、SwiGLU和Down",
+        "按原Token合并贡献",
+        "shared专家和标量门控合并"
+      ],
+      "implementation_paths": [
+        "expert_bucketed"
+      ],
+      "scenarios": "文本Prefill / Decode；空专家与动态Ne",
+      "implementation_status": "planned",
+      "validation_status": "planned",
+      "validation_evidence": []
+    },
+    {
+      "id": "K-14",
+      "name": "LM Head",
+      "operator_ids": [
         "OP-14"
       ],
       "owner": "B",
-      "scope": "按所选位置执行 LM head；评估与 Final Norm 融合",
-      "scenarios": "Prefill 最后位置 / 多位置 / Decode",
+      "scope": "选择输出位置；词表Linear投影；返回对应logits",
+      "internal_steps": [
+        "选择输出位置",
+        "词表Linear投影",
+        "返回对应logits"
+      ],
+      "implementation_paths": [
+        "selected_positions"
+      ],
+      "scenarios": "Prefill / Decode；MTP输出头复用",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []
     },
     {
-      "id": "K-MTP-01",
-      "name": "MTP 输入融合",
+      "id": "K-15",
+      "name": "Feature Concat",
       "operator_ids": [
-        "OP-02",
-        "OP-15",
+        "OP-15"
+      ],
+      "owner": "B",
+      "scope": "检查两路输入位置和形状；按特征维拼接；返回4096维特征",
+      "internal_steps": [
+        "检查两路输入位置和形状",
+        "按特征维拼接",
+        "返回4096维特征"
+      ],
+      "implementation_paths": [
+        "feature_concat"
+      ],
+      "scenarios": "MTP的两路已归一化特征",
+      "implementation_status": "planned",
+      "validation_status": "planned",
+      "validation_evidence": []
+    },
+    {
+      "id": "K-16",
+      "name": "MTP 输入投影",
+      "operator_ids": [
         "OP-16"
       ],
       "owner": "B",
-      "scope": "e/h 两路 RMSNorm、concat 与 4096→2048 投影",
-      "scenarios": "对齐 hidden 与 embedding 的位置",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-MTP-02",
-      "name": "MTP 输出头",
-      "operator_ids": [
-        "OP-02",
-        "OP-14"
+      "scope": "接收拼接特征；使用独立fc参数投影；返回2048维hidden",
+      "internal_steps": [
+        "接收拼接特征",
+        "使用独立fc参数投影",
+        "返回2048维hidden"
       ],
-      "owner": "B",
-      "scope": "shared_head_norm 与 shared_head，复用输出头组织",
-      "scenarios": "MTP 草稿 logits",
-      "implementation_status": "planned",
-      "validation_status": "planned",
-      "validation_evidence": []
-    },
-    {
-      "id": "K-QNT-01",
-      "name": "激活量化与 scale",
-      "operator_ids": [
-        "OP-05",
-        "OP-06",
-        "OP-07",
-        "OP-08",
-        "OP-09",
-        "OP-10",
-        "OP-12",
-        "OP-14",
-        "OP-16"
+      "implementation_paths": [
+        "input_projection"
       ],
-      "owner": "B",
-      "scope": "矩阵输入前准备量化数据和配套 scale",
-      "scenarios": "部署支持 kernel；格式、分组和舍入在基线阶段确认",
+      "scenarios": "MTP输入；两路Norm与Concat由对应OP组合",
       "implementation_status": "planned",
       "validation_status": "planned",
       "validation_evidence": []

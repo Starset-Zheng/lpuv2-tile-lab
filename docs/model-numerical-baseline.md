@@ -4,6 +4,8 @@
 
 模型固定为 [Qwen/Qwen3.6-35B-A3B-FP8](https://huggingface.co/Qwen/Qwen3.6-35B-A3B-FP8/tree/c653bba46dfa06e9658dcc0b0dc87fe4685f14a2)，revision 为 `c653bba46dfa06e9658dcc0b0dc87fe4685f14a2`。计算规则依据 [Transformers 固定源码](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py)及其 [FP8 集成](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py)。模型尺寸、版本和来源 hash 见 [baseline.json](../configs/models/qwen3_6_35b_a3b_fp8/baseline.json)，完整数学与精度规则见 [numerics.json](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)。
 
+当前Python Tile与同profile参考程序采用已确认的 [PTO功能验证标准v0](functional-validation-v0.md)，配置为 [functional-v0.json](../configs/models/qwen3_6_35b_a3b_fp8/functional-v0.json)。该profile明确项目的量化、误差及TopK规则；本文继续记录模型来源和精度转换。
+
 ## 1. 权重、激活与状态的精度
 
 ### 1.1 模型权重与量化参数
@@ -66,6 +68,8 @@ x_bf16
 
 动态量化根据当前输入计算 scale，再把输入量化为 FP8；它包含数值缩放和舍入。固定集成描述按 Token / K 分组的动态激活量化，并将具体计算交给 DeepGEMM 或 finegrained-fp8 等 kernel。实际 scale 表示、分组、舍入、截断和 GEMM 累加精度须随所选 kernel 版本及设备记录，配置中的 FP8 dtype 不能单独确定这些行为。[来源：FP8 Linear 集成](https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L179-L282)。
 
+Python功能验证固定采用`pto-functional-v0`：每Token沿K轴每128个元素一组，FP32计算`amax`和`scale=amax/448`，转换为`float8_e4m3fn`；scale为反量化乘数。全零组`scale=1`；尾组只统计有效元素；FP32除以scale并截断到`[-448,448]`后按最近偶数舍入。输入含NaN/Inf判失败。GEMM按K组应用对应scale，FP32累加并输出BF16。完整规则见 [功能验证标准](functional-validation-v0.md#2-动态激活量化)。
+
 下一步可在 LPUv2 中尝试由生产者直接输出 `FP8 数据 + scale`，供兼容的消费者复用；候选方案见 [FP8 激活存储、量化融合与复用](fp8-activation-storage.md)。当前 reference 继续保留上述 BF16 接口和动态量化位置。
 
 ### 2.2 Norm 的转换顺序
@@ -107,4 +111,4 @@ y_bf16 = BF16(u_bf16 * SiLU(FP32(z_bf16)))
 | Vision MLP / Merger | BF16 Linear → GELU → BF16 Linear；保留激活输出 dtype，block 使用 GELU(tanh)，Merger 使用 GELU exact |
 | BF16 投影、Residual、Embedding / Scatter | 按源码保持 BF16 输出边界；底层 GEMM / 归约内部累加精度随实际后端记录 |
 
-Attention 的数学 reference 使用固定 eager 路径，GDN 使用固定 Torch recurrent / chunk fallback。具体 FP8 kernel 版本、运行环境、比较输出与误差记录遵循 [验证约定](validation.md)；CPU 反量化到 BF16 的排错路径单独登记。当前已完成来源、元数据核对及[A组首批算子reference](reference-a.md)，完整模型与目标FP8后端容差随对应实现验证。
+Attention 的数学 reference 使用固定 eager 路径，GDN 使用固定 Torch recurrent / chunk fallback。具体 FP8 kernel 版本、运行环境、比较输出与误差记录遵循 [验证约定](validation.md)；CPU 反量化到 BF16 的排错路径单独登记。当前已完成来源、元数据核对及[A组首批算子reference](reference-a.md)。功能验证v0的数值标准已确认；golden、kernel与模型的实际验证进度按对应条目和运行结果登记，完整模型与目标FP8后端容差随对应实现验证。

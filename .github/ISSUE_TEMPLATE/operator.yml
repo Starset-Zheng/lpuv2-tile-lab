@@ -1,5 +1,5 @@
-name: 算子或kernel任务
-description: 认领OP/kernel，记录计算、接口和交付
+name: 算子及对应kernel任务
+description: 一个OP对应一个完整逻辑kernel，记录内部步骤、接口和交付
 title: "[OP/K] "
 body:
   - type: input
@@ -12,7 +12,7 @@ body:
     id: scope
     attributes:
       label: 范围、参考版本与输入输出
-      description: 包含shape、dtype、mask、索引、状态及运行场景
+      description: 包含shape、dtype、mask、索引、状态及内部实现路径；子阶段归入该OP/kernel
     validations:
       required: true
   - type: textarea

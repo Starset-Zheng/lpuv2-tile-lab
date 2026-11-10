@@ -2,7 +2,7 @@
   "schema_version": 1,
   "case_id": "op04-residual-bf16-small",
   "op_id": "OP-04",
-  "kernel_id": "K-NRM-03",
+  "kernel_id": "K-04",
   "numerical_profile": "qwen3_6_35b_a3b_fp8-v1",
   "seed": 17,
   "parameters": {"rows": 3, "cols": 17},

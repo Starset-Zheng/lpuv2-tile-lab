@@ -1,17 +1,39 @@
 # 验证约定
 
-共同遵循 [模型与数值基线](model-numerical-baseline.md) 和 [数值契约](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)。基线锁定配置、权重revision及参考源码；具体FP8执行后端与浮点容差随实际case确认。
+共同遵循 [模型与数值基线](model-numerical-baseline.md)、[数值契约](../configs/models/qwen3_6_35b_a3b_fp8/numerics.json)和已确认的 [PTO功能验证标准v0](functional-validation-v0.md)。当前Python Tile与同profile参考程序的量化、误差和TopK规则由 [functional-v0.json](../configs/models/qwen3_6_35b_a3b_fp8/functional-v0.json)固定；实际后端结果另行记录。
 
 | 层级 | 比较对象 | 完成时记录 |
 | --- | --- | --- |
 | Golden | 固定参考函数/官方实现与独立reference | 来源revision、配置、dtype、公式及中间结果 |
-| Kernel/OP | 同输入golden与实际PTO输出 | 后端、指令组合、Tile配置、有效范围、输出/索引/状态及容差 |
+| Kernel/OP | 同输入golden与实际Python Tile程序或后续PTO后端输出 | 执行方式、操作组合、Tile配置、有效范围、输出/索引/状态及容差 |
 | 子图/层 | Vision、GDN/FullAttention+MoE、MTP | 节点与边界输出、残差、cache和状态交接 |
 | 模型 | Prefill、连续Decode及后续多模态/MTP | 层输出、logits、生成结果及全部可写状态 |
 
 部分Tile、多Tile尾块、零值/常量行、非零初始状态、空专家和多请求隔离随相关实现加入。比较每个命名输出；GDN State、Conv历史、KV和路由索引单独记录。
 
-CPU功能验证、NPU验证及LPU功能模型验证分别登记。CPU模拟结果用于验证当前CPU路径的数值与边界语义；硬件同步、周期和资源结论随对应目标环境验证。
+Python Tile功能验证、实际PTO CPU/NPU及LPU功能模型验证分别登记。Python结果用于确认当前程序的数值、索引和状态语义；硬件同步、周期和资源结论随对应目标环境验证。
+
+## 已确认的功能验收标准
+
+| 输出或检查对象 | `pto-functional-v0`规则 |
+| --- | --- |
+| BF16浮点输出 | `atol=1e-2, rtol=1e-2` |
+| FP32输出、归约结果与GDN State | `atol=1e-5, rtol=1e-4` |
+| 搬运、重排、整数索引、计数和mask | 精确一致 |
+| 量化FP8 payload与激活scale | 按v0量化算法精确一致 |
+| shape、dtype | 符合接口约定 |
+
+按`abs(actual-reference) <= atol + rtol*abs(reference)`逐元素检查，任一元素超限即失败。主输出、KV、GDN State和Conv历史分别检查；输出或状态出现NaN/Inf判失败。TopK按分数降序，同分按专家ID升序，并保持值、索引和路由权重对应。
+
+动态激活量化使用每Token、K轴128元素分组，FP32 scale为反量化乘数，非零组`scale=amax/448`；FP8格式为`float8_e4m3fn`，截断到`[-448,448]`后最近偶数舍入。全零组、尾组及异常输入规则见 [完整标准](functional-validation-v0.md)。
+
+## 当前阶段的Python Tile功能验证
+
+以官方PyPTO main为来源，在Python层编写Tile程序，与独立golden比较。Golden可以直接表达完整算子，Tile程序展开基础操作、分块、归约、类型转换和状态顺序；所需补充能力配套独立语义测试。采用相同的随机输入和权重，先检查小尺寸，再补充模型相关真实维度及边界；真实权重在集成阶段接入。
+
+当前按 [一个OP对应一个逻辑kernel](kernel-organization.md) 组织16个实现入口。内部子阶段可导出中间结果和单独排错，完整kernel的完成依据是对应OP的全部输出与状态通过；Prefill/Decode、recurrent/chunk分别登记路径结果。子图和层由这些OP/kernel组合，跨OP融合在后续架构映射阶段评估。
+
+运行时保存实际PyPTO commit、Python/Torch版本、数值profile、随机种子、程序或IR，以及所有命名输出的结果。Python阶段通过后可据此整理LPUv2指令候选能力；实际PTO后端和LPU架构约束随相应程序接入验证。公共能力的主责、交付顺序及状态记录见 [两人分工与公共协作约束](work-allocation.md)。
 
 ## 先运行公共框架检查
 
@@ -34,7 +56,7 @@ Reference和被测实现分别接收一份深拷贝的输入及参数，可以�
 
 ## Case与比较规则
 
-[示例case](../cases/examples/op04-residual-bf16.json)定义OP/K编号、数值profile、seed、参数及输出检查规则。输入tensor由算子用例显式构造，随机数使用 `case.generator()`；JSON不承担通用计算图或Tensor生成DSL。OP-04示例中的零容差用于严格残差加法用例，其他算子按实际精度路径单独校准。
+[示例case](../cases/examples/op04-residual-bf16.json)定义OP/K编号、数值profile、seed、参数及输出检查规则。输入tensor由算子用例显式构造，随机数使用 `case.generator()`；JSON不承担通用计算图或Tensor生成DSL。新功能用例填写`numerical_profile="pto-functional-v0"`，并按上表显式配置每份输出的检查。精确浮点比较填写`atol=0, rtol=0`，整数和布尔输出不填浮点容差。现有OP-04零容差用例继续用于严格残差检查；Case加载器按显式规则执行。
 
 每个回调返回 `dict[str, torch.Tensor]`，例如 `{"out": ..., "state_out": ...}`。case必须声明reference返回的全部输出；比较器报告缺失或多余的输出。
 
@@ -44,7 +66,7 @@ Reference和被测实现分别接收一份深拷贝的输入及参数，可以�
 - 报告按输出记录最大绝对/相对误差、最坏坐标、不匹配数量/比例和非有限值数量。浮点分析转FP64，执行和保存的tensor保留原dtype；整数比较保留精确性。
 - 相同输出形状及数值不能替代dtype检查。TopK同值顺序、有效区域和padding语义由对应算子用例显式验证。
 
-## 首个算子的接入方式
+## 后续PTO CPU程序的接入示例
 
 下面展示pytest用例的组织方式。`residual_add` reference已提供；`residual_pto_cpu`由后续PTO kernel任务接入。
 
