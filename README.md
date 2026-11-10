@@ -1,13 +1,13 @@
 # LPUv2 Tile Lab
 
-面向 Qwen3.6-35B-A3B 的算子协作工程：建立 PyTorch golden，使用 PTO 编写 Tile kernel，逐算子与模型验证，并据此完善 LPUv2 Tile ISA 与 programming model。
+面向 Qwen3.6-35B-A3B 的算子协作工程：建立独立 PyTorch golden，先在 Python/PyPTO 层实现 Tile kernel 并验证功能，整理 LPUv2 指令候选集，再结合架构完善 Tile ISA 与 programming model。
 
 **当前阶段：公共验证框架已建立，算子待实现。** 已登记16条模型OP、37个kernel候选、A/B分工及固定版本PTO指令索引。可运行用例定义、逐输出比较和复现产物的框架检查；所有模型算子实现和数值验证状态仍为 `planned`。
 
 ## 从这里开始
 
 1. 阅读 [目录分层](docs/architecture.md)，确定自己修改的层。
-2. 在 [两人分工](docs/work-allocation.md) 中认领OP及kernel。
+2. 在 [两人分工与公共协作约束](docs/work-allocation.md) 中确认OP/kernel归属、公共依赖及交付顺序。
 3. 按 [开发流程](CONTRIBUTING.md) 先确认计算与接口，再提交golden和Tile实现。
 4. 查阅 [PTO参考入口](docs/pto-isa/README.md) 和 [机器可读指令目录](data/pto_isa_catalog.json)。
 5. 按 [验证框架使用方法](docs/validation.md) 接入reference、实际后端和命名输出。
@@ -34,6 +34,8 @@ PTO固定在 `90a3796597a5fabc2ce5066e73f785c2e85822f7`，来源为公开 [hw-na
 
 模型固定为 **Qwen/Qwen3.6-35B-A3B-FP8**。共同基线放在 [configs/models/qwen3_6_35b_a3b_fp8/](configs/models/qwen3_6_35b_a3b_fp8/)，包含官方配置快照、模型/源码revision、checkpoint dtype元数据和数值规则。两人实现reference前阅读 [模型与数值基线](docs/model-numerical-baseline.md)。当前尚未实现golden或完成模型数值验证。
 
+当前采用已确认的 [PTO功能验证标准v0](docs/functional-validation-v0.md)：动态激活量化、BF16/FP32误差阈值、TopK同分与MoE分桶。共同配置为 [functional-v0.json](configs/models/qwen3_6_35b_a3b_fp8/functional-v0.json)。
+
 ## 目录
 
 ```text
@@ -58,4 +60,4 @@ artifacts/           本地运行产物，默认不入库
 
 ## 后续闭环
 
-PyTorch golden → 实际PTO CPU程序 → 同输入比较输出/索引/状态 → 子图与模型接入 → LPUv2能力需求。公共比较和运行记录已可使用；后端编译、具体算子及CI随对应实现接入，执行环境和精度按具体kernel记录。
+模型需求 → PyTorch golden → Python Tile功能验证 → LPUv2指令候选集 → 架构映射 → LPU程序与编程模型验证。公共比较和运行记录已可使用；实际PTO CPU/NPU后端及对应构建、CI随实现接入，执行环境和精度按具体kernel记录。

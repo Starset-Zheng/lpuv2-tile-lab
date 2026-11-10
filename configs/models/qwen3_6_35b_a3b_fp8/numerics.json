@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "baseline_id": "qwen3_6_35b_a3b_fp8-v1",
-  "status": "model_semantics_locked_backend_results_not_calibrated",
-  "source_of_truth": "config.json + immutable checkpoint revision + pinned reference source; backend choices recorded per case",
+  "status": "model_semantics_locked_functional_v0_confirmed_backend_results_not_calibrated",
+  "source_of_truth": "Model facts: config.json, immutable checkpoint and pinned source; project functional choices: functional-v0.json; record actual backend per case",
   "dtype_policy": {
     "base_model_dtype": "bfloat16",
     "checkpoint_storage": {
@@ -160,7 +160,7 @@
     },
     "core_output_cast": "original query dtype",
     "output_norm": "gdn_gated_rmsnorm",
-    "recurrent_chunk_comparison": "same real-arithmetic rule; compare outputs and final FP32 state with separately calibrated floating tolerances, not bitwise equality",
+    "recurrent_chunk_comparison": "Compare outputs and FP32 state using functional-v0.json defaults for the Python functional profile; record other backend/profile rules separately",
     "sources": [
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L492-L652",
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L426-L485",
@@ -179,13 +179,15 @@
     "topk_ties": {
       "status": "not_specified_by_model",
       "reference_operator": "torch.topk",
-      "policy": "record device/backend and tie cases; do not impose a new index tie-break silently"
+      "policy": "Model backend semantics are recorded separately; functional-v0.json explicitly selects descending score with ascending expert ID for exact ties",
+      "functional_profile": "functional-v0.json#/topk"
     },
     "sources": [
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L872-L888",
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L832-L868",
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/models/qwen3_5_moe/modeling_qwen3_5_moe.py#L891-L910"
-    ]
+    ],
+    "dispatch_profile": "functional-v0.json#/moe_dispatch"
   },
   "vision": {
     "operators": [
@@ -289,7 +291,8 @@
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L208-L282",
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/integrations/finegrained_fp8.py#L285-L303",
       "https://github.com/huggingface/transformers/blob/f90e93c4f83974f634860e246cdfd2c68666d605/src/transformers/quantizers/quantizer_finegrained_fp8.py#L18-L186"
-    ]
+    ],
+    "functional_validation_profile": "functional-v0.json#/activation_quantization"
   },
   "mtp": {
     "operators": [
@@ -310,10 +313,11 @@
     "attention_math_reference": "pinned eager_attention_forward",
     "gdn_math_reference": "pinned Torch fallback recurrent/chunk functions; no implicit fused substitution",
     "fp32_debug_profile": "allowed only with a distinct label; not the BF16/FP8 target golden",
-    "native_fp8_profile": "required to validate activation quantization and target FP8 behavior; never label BF16-dequantized CPU execution as native FP8"
+    "native_fp8_profile": "Validate native backend behavior separately; Python functional validation follows functional-v0.json; do not label BF16-dequantized debugging as native FP8",
+    "functional_profile": "pto-functional-v0: independent reference and Python Tile program use the same quantization, comparison and TopK rules"
   },
   "comparison_policy": {
-    "integer_and_index_outputs": "exact when uniquely specified; handle tied TopK according to recorded backend semantics",
+    "integer_and_index_outputs": "exact; functional-v0.json fixes TopK score order and exact-tie expert ID order",
     "floating_outputs": "compare in a common floating analysis dtype without changing the execution arithmetic",
     "required_outputs": [
       "output tensors",
@@ -329,11 +333,19 @@
       "worst_index"
     ],
     "tolerances": {
-      "status": "not_calibrated",
-      "atol": null,
-      "rtol": null,
-      "rule": "set per OP/output/backend/dtype and representative cases after first execution; do not invent a universal FP8 tolerance"
+      "status": "confirmed_for_functional_v0",
+      "profile_id": "pto-functional-v0",
+      "rules": "functional-v0.json#/comparison",
+      "rule": "Apply per-output BF16/FP32 defaults and exact-output exceptions; declare each check explicitly in the case",
+      "native_backend_status": "record and validate separately"
     },
-    "nonfinite_values": "record and check explicitly; never silently treat arbitrary NaNs as matching"
+    "nonfinite_values": "fail on NaN or Inf in outputs and states; quantization rejects nonfinite input"
+  },
+  "functional_validation_profile": {
+    "id": "pto-functional-v0",
+    "file": "functional-v0.json",
+    "origin": "project_convention",
+    "status": "confirmed",
+    "confirmed_on": "2026-11-10"
   }
 }
