@@ -1,0 +1,313 @@
+{
+  "schema_version": 1,
+  "status": "historical_reference_only",
+  "current_registry": "kernels.json",
+  "rule": "These 37 retired labels are not additional kernels; use the 16 current IDs for new cases. Existing artifacts retain their original metadata.",
+  "quantization_scope": "Only FP8 GEMM inputs use the shared quantization helper; BF16 Vision/LM Head/MTP input projection do not acquire an FP8 quantization requirement from an old label.",
+  "mappings": [
+    {
+      "legacy_id": "K-EMB-01",
+      "legacy_name": "Embedding Gather",
+      "kernel_ids": [
+        "K-01"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-NRM-01",
+      "legacy_name": "RMSNorm",
+      "kernel_ids": [
+        "K-02"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-NRM-02",
+      "legacy_name": "LayerNorm",
+      "kernel_ids": [
+        "K-03"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-NRM-03",
+      "legacy_name": "Residual Add",
+      "kernel_ids": [
+        "K-04"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-NRM-04",
+      "legacy_name": "Residual Add + Norm",
+      "kernel_ids": [
+        "K-04",
+        "K-02",
+        "K-03"
+      ],
+      "resolution": "separate_operator_entries_now; cross_op_fusion_deferred"
+    },
+    {
+      "legacy_id": "K-FA-01",
+      "legacy_name": "Attention 投影",
+      "kernel_ids": [
+        "K-05"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-FA-02",
+      "legacy_name": "Q/K Norm、RoPE 与 KV 写入",
+      "kernel_ids": [
+        "K-05"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-FA-03",
+      "legacy_name": "Prefill Attention",
+      "kernel_ids": [
+        "K-05"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-FA-04",
+      "legacy_name": "Decode Attention",
+      "kernel_ids": [
+        "K-05"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-FA-05",
+      "legacy_name": "Attention 输出",
+      "kernel_ids": [
+        "K-05"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-01",
+      "legacy_name": "GDN 投影",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-02",
+      "legacy_name": "因果 Conv 与 SiLU",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-03",
+      "legacy_name": "Q/K 与门控准备",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-04",
+      "legacy_name": "Recurrent Delta Rule",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-05",
+      "legacy_name": "Chunk 系数准备",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-06",
+      "legacy_name": "Chunk 下三角求解",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-07",
+      "legacy_name": "Chunk 输出与状态传递",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-GDN-08",
+      "legacy_name": "GDN 输出",
+      "kernel_ids": [
+        "K-06"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-01",
+      "legacy_name": "Router 投影",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-02",
+      "legacy_name": "路由选择",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-03",
+      "legacy_name": "专家 Dispatch",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-04",
+      "legacy_name": "专家 Gate/Up",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-05",
+      "legacy_name": "SwiGLU",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-06",
+      "legacy_name": "专家 Down",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-07",
+      "legacy_name": "专家 Combine",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MOE-08",
+      "legacy_name": "Shared Gate 与合并",
+      "kernel_ids": [
+        "K-07"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-VIS-01",
+      "legacy_name": "Patch Embedding",
+      "kernel_ids": [
+        "K-08"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-VIS-02",
+      "legacy_name": "视觉位置嵌入",
+      "kernel_ids": [
+        "K-11"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-VIS-03",
+      "legacy_name": "视觉 QKV 与 RoPE",
+      "kernel_ids": [
+        "K-09"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-VIS-04",
+      "legacy_name": "视觉 Attention",
+      "kernel_ids": [
+        "K-09"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-VIS-05",
+      "legacy_name": "视觉 MLP",
+      "kernel_ids": [
+        "K-10"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-VIS-06",
+      "legacy_name": "Spatial Merge / Projector",
+      "kernel_ids": [
+        "K-12"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-MM-01",
+      "legacy_name": "多模态融合",
+      "kernel_ids": [
+        "K-13"
+      ],
+      "resolution": "internal_stage_or_previous_operator_label"
+    },
+    {
+      "legacy_id": "K-OUT-01",
+      "legacy_name": "词表投影",
+      "kernel_ids": [
+        "K-02",
+        "K-14"
+      ],
+      "resolution": "separate_operator_entries_now; cross_op_fusion_deferred"
+    },
+    {
+      "legacy_id": "K-MTP-01",
+      "legacy_name": "MTP 输入融合",
+      "kernel_ids": [
+        "K-02",
+        "K-15",
+        "K-16"
+      ],
+      "resolution": "separate_operator_entries_now; cross_op_fusion_deferred"
+    },
+    {
+      "legacy_id": "K-MTP-02",
+      "legacy_name": "MTP 输出头",
+      "kernel_ids": [
+        "K-02",
+        "K-14"
+      ],
+      "resolution": "separate_operator_entries_now; cross_op_fusion_deferred"
+    },
+    {
+      "legacy_id": "K-QNT-01",
+      "legacy_name": "激活量化与 scale",
+      "kernel_ids": [
+        "K-05",
+        "K-06",
+        "K-07"
+      ],
+      "resolution": "shared_quantization_helper_for_fp8_gemm_inputs"
+    }
+  ]
+}

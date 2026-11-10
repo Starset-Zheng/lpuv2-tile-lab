@@ -31,6 +31,8 @@ Python Tile功能验证、实际PTO CPU/NPU及LPU功能模型验证分别登记�
 
 以官方PyPTO main为来源，在Python层编写Tile程序，与独立golden比较。Golden可以直接表达完整算子，Tile程序展开基础操作、分块、归约、类型转换和状态顺序；所需补充能力配套独立语义测试。采用相同的随机输入和权重，先检查小尺寸，再补充模型相关真实维度及边界；真实权重在集成阶段接入。
 
+当前按 [一个OP对应一个逻辑kernel](kernel-organization.md) 组织16个实现入口。内部子阶段可导出中间结果和单独排错，完整kernel的完成依据是对应OP的全部输出与状态通过；Prefill/Decode、recurrent/chunk分别登记路径结果。子图和层由这些OP/kernel组合，跨OP融合在后续架构映射阶段评估。
+
 运行时保存实际PyPTO commit、Python/Torch版本、数值profile、随机种子、程序或IR，以及所有命名输出的结果。Python阶段通过后可据此整理LPUv2指令候选能力；实际PTO后端和LPU架构约束随相应程序接入验证。公共能力的主责、交付顺序及状态记录见 [两人分工与公共协作约束](work-allocation.md)。
 
 ## 先运行公共框架检查

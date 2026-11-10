@@ -2,7 +2,7 @@
 
 面向 Qwen3.6-35B-A3B 的算子协作工程：建立独立 PyTorch golden，先在 Python/PyPTO 层实现 Tile kernel 并验证功能，整理 LPUv2 指令候选集，再结合架构完善 Tile ISA 与 programming model。
 
-**当前阶段：公共验证框架已建立，算子待实现。** 已登记16条模型OP、37个kernel候选、A/B分工及固定版本PTO指令索引。可运行用例定义、逐输出比较和复现产物的框架检查；所有模型算子实现和数值验证状态仍为 `planned`。
+**当前阶段：公共验证框架已建立，算子待实现。** 已登记16条模型OP与一一对应的16个逻辑kernel、A/B分工及固定版本PTO指令索引。可运行用例定义、逐输出比较和复现产物的框架检查；所有模型算子实现和数值验证状态仍为 `planned`。
 
 ## 从这里开始
 
@@ -11,6 +11,8 @@
 3. 按 [开发流程](CONTRIBUTING.md) 先确认计算与接口，再提交golden和Tile实现。
 4. 查阅 [PTO参考入口](docs/pto-isa/README.md) 和 [机器可读指令目录](data/pto_isa_catalog.json)。
 5. 按 [验证框架使用方法](docs/validation.md) 接入reference、实际后端和命名输出。
+
+当前采用 [一个OP对应一个逻辑kernel](docs/kernel-organization.md)，编号为`OP-01↔K-01`至`OP-16↔K-16`。Conv、TopK、量化和状态更新等在相应kernel内部组织；Prefill/Decode与recurrent/chunk作为实现路径记录。
 
 ```bash
 git clone --recurse-submodules https://github.com/cxjiang-bk/lpuv2-tile-lab.git

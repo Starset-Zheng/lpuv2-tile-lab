@@ -2,6 +2,7 @@
 
 - This phase contains documentation, registries, validation helpers and an upstream submodule. Implement model algorithms only when a task authorizes implementation.
 - Read the OP/kernel contract and independent reference before editing an operator. Keep `pymodel/ref` independent of `kernels/pto` and backend dispatch.
+- Follow `docs/kernel-organization.md`: the current phase has one complete logical kernel per OP, with matching OP-01/K-01 through OP-16/K-16 IDs. Keep sub-operations and recurrent/chunk or prefill/decode paths inside that entry; shared helpers are not additional kernels. Historical IDs are mapped in `data/legacy-kernel-map.json`.
 - Read `docs/work-allocation.md` for A/B ownership, shared interfaces and delivery order. Keep shared definitions and their consumer examples in focused changes; update affected callers and tests together.
 - The shared model and numerical baseline is `configs/models/qwen3_6_35b_a3b_fp8/`; read `baseline.json`, `numerics.json` and `docs/model-numerical-baseline.md` before implementing a reference. Preserve source cast boundaries and checkpoint scales; the pinned Transformers main model does not implement MTP.
 - Use the confirmed `functional-v0.json` profile for Python functional validation, including activation quantization, BF16/FP32 tolerances, exact-output checks, TopK ties and expert bucketing. Declare per-output checks explicitly in each case; preserve the distinction between model-source facts and project conventions. The readable contract is `docs/functional-validation-v0.md`.

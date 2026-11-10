@@ -8,7 +8,7 @@
       "architecture_path": "Token embedding",
       "owner": "B",
       "kernel_ids": [
-        "K-EMB-01"
+        "K-01"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -21,8 +21,7 @@
       "architecture_path": "Vision encoder / Patch Embedding",
       "owner": "A",
       "kernel_ids": [
-        "K-VIS-01",
-        "K-QNT-01"
+        "K-08"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -35,7 +34,7 @@
       "architecture_path": "Vision encoder / 位置嵌入",
       "owner": "A",
       "kernel_ids": [
-        "K-VIS-02"
+        "K-11"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -48,8 +47,7 @@
       "architecture_path": "Vision encoder / LayerNorm",
       "owner": "A",
       "kernel_ids": [
-        "K-NRM-02",
-        "K-NRM-04"
+        "K-03"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -62,9 +60,7 @@
       "architecture_path": "Vision encoder / Vision Attention",
       "owner": "A",
       "kernel_ids": [
-        "K-VIS-03",
-        "K-VIS-04",
-        "K-QNT-01"
+        "K-09"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -77,8 +73,7 @@
       "architecture_path": "Vision encoder / Residual Add",
       "owner": "A",
       "kernel_ids": [
-        "K-NRM-03",
-        "K-NRM-04"
+        "K-04"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -91,8 +86,7 @@
       "architecture_path": "Vision encoder / Dense FFN",
       "owner": "A",
       "kernel_ids": [
-        "K-VIS-05",
-        "K-QNT-01"
+        "K-10"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -105,8 +99,7 @@
       "architecture_path": "Vision encoder / Spatial Merger",
       "owner": "A",
       "kernel_ids": [
-        "K-VIS-06",
-        "K-QNT-01"
+        "K-12"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -119,7 +112,7 @@
       "architecture_path": "Multimodal fusion",
       "owner": "A",
       "kernel_ids": [
-        "K-MM-01"
+        "K-13"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -132,11 +125,7 @@
       "architecture_path": "Decoder / RMSNorm",
       "owner": "B",
       "kernel_ids": [
-        "K-NRM-01",
-        "K-NRM-04",
-        "K-OUT-01",
-        "K-MTP-01",
-        "K-MTP-02"
+        "K-02"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -149,15 +138,7 @@
       "architecture_path": "Decoder / GDN",
       "owner": "A",
       "kernel_ids": [
-        "K-GDN-01",
-        "K-GDN-02",
-        "K-GDN-03",
-        "K-GDN-04",
-        "K-GDN-05",
-        "K-GDN-06",
-        "K-GDN-07",
-        "K-GDN-08",
-        "K-QNT-01"
+        "K-06"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -170,12 +151,7 @@
       "architecture_path": "Decoder / Full Attention",
       "owner": "B",
       "kernel_ids": [
-        "K-FA-01",
-        "K-FA-02",
-        "K-FA-03",
-        "K-FA-04",
-        "K-FA-05",
-        "K-QNT-01"
+        "K-05"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -188,15 +164,7 @@
       "architecture_path": "Decoder / MoE FFN",
       "owner": "B",
       "kernel_ids": [
-        "K-MOE-01",
-        "K-MOE-02",
-        "K-MOE-03",
-        "K-MOE-04",
-        "K-MOE-05",
-        "K-MOE-06",
-        "K-MOE-07",
-        "K-MOE-08",
-        "K-QNT-01"
+        "K-07"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -209,9 +177,7 @@
       "architecture_path": "Final Norm → LM Head",
       "owner": "B",
       "kernel_ids": [
-        "K-OUT-01",
-        "K-MTP-02",
-        "K-QNT-01"
+        "K-14"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -224,7 +190,7 @@
       "architecture_path": "MTP / Feature Concat",
       "owner": "B",
       "kernel_ids": [
-        "K-MTP-01"
+        "K-15"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
@@ -237,13 +203,13 @@
       "architecture_path": "MTP / 输入投影",
       "owner": "B",
       "kernel_ids": [
-        "K-MTP-01",
-        "K-QNT-01"
+        "K-16"
       ],
       "golden_status": "planned",
       "pto_implementation_status": "planned",
       "pto_validation_status": "planned",
       "model_validation_status": "planned"
     }
-  ]
+  ],
+  "kernel_organization": "one_logical_kernel_per_operator"
 }

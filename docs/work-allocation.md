@@ -1,6 +1,6 @@
 # 两人分工
 
-A主责GDN与视觉分支，B主责Full Attention、MoE、输入输出及MTP。按计算、状态和验证复杂度粗估分配：A为9条OP/17个kernel，B为7条OP/20个kernel。
+A主责GDN与视觉分支，B主责Full Attention、MoE、输入输出及MTP。当前按一个OP对应一个逻辑kernel登记：A为9条OP/9个kernel，B为7条OP/7个kernel。工作量按复合算子的计算、状态与验证复杂度评估，编号数不直接代表工作量。
 
 A由jcx认领，使用 `operator_dev_jcx` 分支；B的具体认领与分支记录在任务或PR中。下表记录主线进度，分支上的实现通过相应检查、合入后再更新主线登记。
 
@@ -29,7 +29,7 @@ A负责GDN/Conv状态、Vision/位置元数据及视觉接入；B负责KV、路�
 
 RMSNorm由B、LayerNorm/Residual由A维护；GEMM与量化接口由B牵头，参考版本及比较入口由A牵头。公共接口变更说明受影响的调用点，另一人交叉评审。
 
-完整逐kernel归属见 [kernels.json](../data/kernels.json)，状态接口见 [interfaces.json](../data/interfaces.json)。首轮核心原型完成后按实际用时调整边界清晰的任务。
+完整逐kernel归属见 [kernels.json](../data/kernels.json)，编号与内部步骤见 [kernel组织](kernel-organization.md)，状态接口见 [interfaces.json](../data/interfaces.json)。首轮完整算子原型完成后按实际用时调整任务安排。GDN的Conv/门控和MoE的路由/分桶等作为内部步骤，公共GEMM/量化以函数复用。
 
 ## 公共能力的维护与交付
 
