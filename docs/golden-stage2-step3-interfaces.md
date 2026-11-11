@@ -2,7 +2,7 @@
 
 记录日期：2026-11-11。基线：`qwen3_6_35b_a3b_fp8-v1`；数值profile：`pto-functional-v0`。
 
-本文记录步骤3的接口与当时的实现范围。后续公共Linear、量化、RMSNorm及选择函数的入口和验证见[步骤4记录](golden-stage2-step4-numerics.md)。
+本文记录步骤3的接口建议与当时的实现范围。公共数值入口见[步骤4记录](golden-stage2-step4-numerics.md)，完整算子及MTP的实际调用方式见[步骤5—8记录](golden-stage2-steps5-8.md)。
 
 本步骤把已确定的7个算子整理成可直接讨论的调用约定，并用一个小型Embedding检查调用与测试流程。算子清单沿用阶段一；本次落实的是“怎样传入数据、怎样返回并检查结果”。
 
