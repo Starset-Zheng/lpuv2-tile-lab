@@ -11,7 +11,8 @@
 - 步骤3已完成：见[RMSNorm Tile程序](golden-stage3-step3-rmsnorm.md)。
 - 步骤4已完成：见[公共Tile数值函数](golden-stage3-step4-numerics.md)。
 - 步骤5已完成：见[LM Head、Concat与MTP输入投影](golden-stage3-step5-output-mtp.md)。
-- 步骤6已完成：见[完整Full Attention](golden-stage3-step6-attention.md)。后续从步骤7继续。
+- 步骤6已完成：见[完整Full Attention](golden-stage3-step6-attention.md)。
+- 步骤7已完成：见[完整MoE](golden-stage3-step7-moe.md)。后续从步骤8继续。
 
 ## 计划起点（执行前）
 
@@ -172,7 +173,7 @@ LM Head内部不重复Final Norm；Concat内部不执行两路Norm；MTP投影�
 
 最小验证：少量Token、至少8个专家，包含共享命中和一个空桶；另用一次同分输入检查Top-8顺序。比较out、expert_id、route_weight及基本分桶对应，不系统枚举所有路由组合。
 
-建议文件：`kernels/pto/moe/moe.py`、`tests/kernels/test_moe.py`。初期Scatter合并可以按专家顺序执行；硬件atomic及UB冲突在架构映射时讨论。
+实现与测试：`kernels/pto/moe/moe.py`、`tests/kernels/test_moe_tile.py`。当前Top-8由基础比较循环组合，分桶/Gather/合并由PyPTO索引与Tile读写表达，见[步骤7记录](golden-stage3-step7-moe.md)。Scatter合并按专家顺序执行；硬件atomic及UB冲突在架构映射时讨论。
 
 ## 步骤8：组合最小MTP Tile流程
 
