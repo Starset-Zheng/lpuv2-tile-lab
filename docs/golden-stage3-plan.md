@@ -12,7 +12,8 @@
 - 步骤4已完成：见[公共Tile数值函数](golden-stage3-step4-numerics.md)。
 - 步骤5已完成：见[LM Head、Concat与MTP输入投影](golden-stage3-step5-output-mtp.md)。
 - 步骤6已完成：见[完整Full Attention](golden-stage3-step6-attention.md)。
-- 步骤7已完成：见[完整MoE](golden-stage3-step7-moe.md)。后续从步骤8继续。
+- 步骤7已完成：见[完整MoE](golden-stage3-step7-moe.md)。
+- 步骤8已完成：见[最小MTP Tile组合](golden-stage3-step8-mtp.md)。后续从步骤9继续。
 
 ## 计划起点（执行前）
 
