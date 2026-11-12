@@ -13,7 +13,8 @@
 - 步骤5已完成：见[LM Head、Concat与MTP输入投影](golden-stage3-step5-output-mtp.md)。
 - 步骤6已完成：见[完整Full Attention](golden-stage3-step6-attention.md)。
 - 步骤7已完成：见[完整MoE](golden-stage3-step7-moe.md)。
-- 步骤8已完成：见[最小MTP Tile组合](golden-stage3-step8-mtp.md)。后续从步骤9继续。
+- 步骤8已完成：见[最小MTP Tile组合](golden-stage3-step8-mtp.md)。
+- 步骤9已完成：见[B路线实现与操作使用汇总](golden-stage3-step9-summary.md)。阶段3交付完成，下一步进入阶段4的候选能力归并。
 
 ## 计划起点（执行前）
 
@@ -217,7 +218,7 @@ LM Head内部不重复Final Norm；Concat内部不执行两路Norm；MTP投影�
 - 测试使用现有`Case/run_case`，不另建框架；缺实现时报错，失败时按需保留输入和报告。README仅链接实施说明。
 - 代表用例通过后继续下一步；出现实际差异再增加针对性的检查。无需先完成完整模型、设备后端或性能分析。
 
-建议首批执行范围仅为步骤1和2，建立可复用的最小运行方式。此后每次按一个步骤交付，公共投影与量化可在步骤4内分两批完成。
+步骤1至步骤9现已完成，B路线的实现、操作归并和验证证据见[步骤9汇总](golden-stage3-step9-summary.md)。后续工作进入阶段4：从实际操作归并中筛选必要的Tile指令候选集。
 
 ## 参考
 
