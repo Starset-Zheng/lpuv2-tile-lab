@@ -10,7 +10,8 @@
 - 步骤2已完成：见[Embedding Tile程序](golden-stage3-step2-embedding.md)。
 - 步骤3已完成：见[RMSNorm Tile程序](golden-stage3-step3-rmsnorm.md)。
 - 步骤4已完成：见[公共Tile数值函数](golden-stage3-step4-numerics.md)。
-- 步骤5已完成：见[LM Head、Concat与MTP输入投影](golden-stage3-step5-output-mtp.md)。后续从步骤6继续。
+- 步骤5已完成：见[LM Head、Concat与MTP输入投影](golden-stage3-step5-output-mtp.md)。
+- 步骤6已完成：见[完整Full Attention](golden-stage3-step6-attention.md)。后续从步骤7继续。
 
 ## 计划起点（执行前）
 
@@ -153,7 +154,7 @@ LM Head内部不重复Final Norm；Concat内部不执行两路Norm；MTP投影�
 
 最小验证：短Prefill接一个Decode，对比`out`、K/V、有效长度和键位置；用一个非整除query块检查有效区。先沿用当前Golden支持的等长有效输入。
 
-建议文件：`kernels/pto/attention/full_attention.py`、`tests/kernels/test_attention.py`。Prefill/Decode共用K-05；仅有QK或预先提供Q/K/V的测试属于内部步骤，不表示完整入口完成。
+实现与测试：`kernels/pto/attention/full_attention.py`、`tests/kernels/test_attention_tile.py`。Prefill/Decode共用K-05；仅有QK或预先提供Q/K/V的测试属于内部步骤，不表示完整入口完成。
 
 ## 步骤7：实现完整MoE
 

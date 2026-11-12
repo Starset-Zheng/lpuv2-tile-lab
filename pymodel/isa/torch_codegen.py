@@ -2,6 +2,7 @@
 
 Retains upstream IR and Torch codegen; fixes nested statement dispatch,
 FP32 Tile dot products, E4M3FN cast/dtype checks and scalar min/max.
+Also supplies the index sequence and FP32 trig operations used by MRoPE.
 No upstream files or process-global dispatch tables are modified.
 """
 
@@ -47,6 +48,15 @@ class _TileTorchCodegen(_upstream.TorchCodegen):
             # The frontend's round mode maps to Torch's E4M3FN RNE conversion.
             value = self._visit_expr_str(op.args[0])
             self._expr_result = f"{value}.to(torch.float8_e4m3fn)"
+        elif name in ("tile.sin", "tile.cos"):
+            value = self._visit_expr_str(op.args[0])
+            self._expr_result = f"torch.{name.split('.')[1]}({value})"
+        elif name == "tile.ci":
+            start = self._visit_expr_str(op.args[0])
+            shape = self._visit_expr_str(op.args[1])
+            sign = "-" if op.kwargs.get("descending", False) else "+"
+            dtype = _upstream._torch_dtype(op.type.dtype)
+            self._expr_result = f"({start} {sign} torch.arange({shape}[-1], dtype={dtype})).reshape({shape})"
         else:
             super().visit_call(op)
 

@@ -23,5 +23,6 @@
 | REQ-B-02 / candidate | OP-02、K-02普通RMSNorm：跨列Tile保留FP32整行平方和，统计完成后广播，乘`1+weight`后转BF16；尾块不扩大归约分母 | `row_sum/add`累加，`rsqrt/row_expand_mul`归一化，`cast`控制精度；D=256/2048/259经`pypto_torch_codegen`与Golden比较通过，见[步骤3记录](golden-stage3-step3-rmsnorm.md) | 归约状态及scratch如何映射、原输入重读或暂存的取舍；功能Tile宽128未固定硬件规格；生成器有效区适配单独记录 |
 | REQ-B-03 / candidate | 步骤4公共数值能力：BF16/FP8 Linear、128分组量化、稳定Softmax、Sigmoid/SiLU；保留FP32归约与累加、scale关联及最终格式转换 | 六个PyPTO Tile函数经`pypto_torch_codegen_adapted`在CPU通过12项专项验证，量化payload字节与scale精确一致，见[步骤4记录](golden-stage3-step4-numerics.md) | LPU量化/矩阵乘法/特殊函数的指令映射和资源取舍；原生后端精度、布局与存储约束待验证；生成器适配与kernel能力分开登记 |
 | REQ-B-04 / candidate | OP-14/K-14、OP-15/K-15、OP-16/K-16：按请求局部位置选行、按特征列偏移拼接、复用BF16投影，保留输出行及特征顺序 | 三个完整入口经`pypto_torch_codegen_adapted`通过6项CPU专项验证，含重复位置及尾块，见[步骤5记录](golden-stage3-step5-output-mtp.md) | 索引和视图的地址表达、拼接与投影的数据交接、选中多行投影的资源复用；不因新OP入口而直接新增指令 |
+| REQ-B-05 / candidate | OP-05/K-05：Partial MRoPE的THW索引/半区配对、按head整理数据、GQA选择KV、按键位置屏蔽及KV追加；保留QK/概率/PV/gate的BF16边界 | 完整hidden到out/KV的Prefill→Decode、GQA8因果例子及RoPE定向检查经适配生成路径通过，见[步骤6记录](golden-stage3-step6-attention.md) | 旋转/三角函数和mask的指令组合，跨块score/概率存储，KV布局、容量与访问复用；软件多形状特化与硬件能力分开处理 |
 
 以上为Python功能证据，不表示已完成PTO CPU/NPU后端验证或已接受LPU指令。
