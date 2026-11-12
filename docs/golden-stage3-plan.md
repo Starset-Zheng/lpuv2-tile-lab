@@ -7,7 +7,10 @@
 ## 执行进展
 
 - 步骤1已完成：见[最小CPU执行路径](golden-stage3-step1-execution.md)。
-- 步骤2已完成：见[Embedding Tile程序](golden-stage3-step2-embedding.md)。后续从步骤3继续。
+- 步骤2已完成：见[Embedding Tile程序](golden-stage3-step2-embedding.md)。
+- 步骤3已完成：见[RMSNorm Tile程序](golden-stage3-step3-rmsnorm.md)。
+- 步骤4已完成：见[公共Tile数值函数](golden-stage3-step4-numerics.md)。
+- 步骤5已完成：见[LM Head、Concat与MTP输入投影](golden-stage3-step5-output-mtp.md)。后续从步骤6继续。
 
 ## 计划起点（执行前）
 
@@ -89,7 +92,7 @@ PyPTO的Python操作、PTO ISA条目和未来LPU指令是三层不同对象。�
 1. 在`kernels/pto/common/rmsnorm.py`建立K-02，展开读取、转FP32、平方、求和、均值、eps、rsqrt、广播、乘`1+weight`及BF16回转。
 2. 一行跨多个列Tile时，先合并所有有效列的平方和，再计算最终均方。尾部填充不计入分母。
 3. 统计量产生后重新读取原输入或使用明确的局部暂存，完成逐元素缩放。先采用容易理解的重新读取方式。
-4. 用`tests/kernels/test_rmsnorm.py`与现有普通RMSNorm ref比较。D=256和2048可作为两个代表尺寸；其中至少一例跨列Tile。
+4. 用`tests/kernels/test_rmsnorm_tile.py`与现有普通RMSNorm ref比较。D=256和2048可作为两个代表尺寸；其中至少一例跨列Tile。
 
 最小验证：主结果、BF16输出和跨Tile归约正确即可；发生差异时再导出平方和定位。
 
@@ -109,13 +112,15 @@ PyPTO的Python操作、PTO ISA条目和未来LPU指令是三层不同对象。�
 | 稳定Softmax | 展开最大值、减法、exp、求和、除法；跨Tile统计范围完整，返回FP32 | 一个多列Tile概率例子，与公共Softmax ref比较 |
 | 必要激活 | 按实际算子需要组合Sigmoid/SiLU；记录支持的基础操作及转换边界 | 随Attention/MoE的代表用例验证 |
 
+步骤4已用PyPTO显式Tile程序实现上述能力，并通过项目内补充基础语义适配的Torch codegen执行。适配范围、公共接口和实际结果见[步骤4记录](golden-stage3-step4-numerics.md)，后端标签为`pypto_torch_codegen_adapted`。
+
 关键点：
 
 - Tile切分不能移动128元素量化组的起点。尾块保留有效列数和其对应scale。
 - FP32累加是数值语义；底层如何表达和执行以选定API为准。接口缺失时明确记录补充能力。
 - 比较器仍用项目v0。BF16结果有差异时先核对累加、缩放及舍入位置，不能通过放宽容差代替定位。
 
-建议测试入口：`tests/kernels/test_linear.py`、`test_quantization.py`和`test_softmax.py`。公共定义及最小调用例子交给A复用，双方直接引用同一份代码。
+本轮比较集中在`tests/kernels/test_numeric_tile.py`。公共定义及最小调用例子交给A复用，双方直接引用同一份代码。
 
 ## 步骤5：完成LM Head、Concat与MTP输入投影
 
@@ -127,7 +132,7 @@ PyPTO的Python操作、PTO ISA条目和未来LPU指令是三层不同对象。�
 | K-15 Concat | 从两路已归一化输入读取Tile，按`[e_norm;h_norm]`写入完整特征 | 两路标记值不同，检查拼接顺序和行对应 |
 | K-16输入投影 | 用独立BF16 fc参数，把完整拼接特征投影回H维 | 一个小矩阵，检查权重方向和输出 |
 
-建议入口分别放`kernels/pto/output/lm_head.py`和`kernels/pto/mtp/input.py`，测试分别为`tests/kernels/test_lm_head.py`、`test_mtp_input.py`。相邻小函数可以放同一文件。
+入口分别位于`kernels/pto/output/lm_head.py`和`kernels/pto/mtp/input.py`，比较集中在`tests/kernels/test_output_tile.py`。
 
 LM Head内部不重复Final Norm；Concat内部不执行两路Norm；MTP投影不改为FP8。核对标准直接使用现有`pymodel/ref/output.py`。
 
